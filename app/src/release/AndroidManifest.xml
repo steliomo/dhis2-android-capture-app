@@ -23,6 +23,10 @@
         android:name="android.hardware.sensor.accelerometer"
         android:required="false" />
 
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false"/>
+
     <application
         android:name=".App"
         android:allowBackup="false"
@@ -162,7 +166,7 @@
         <!--SMS-->
 
         <!-- BroadcastReceiver that listens for incoming SMS messages -->
-        <receiver
+        <!--<receiver
             android:name="org.hisp.dhis.android.core.sms.data.smsrepository.internal.SmsListener"
             android:enabled="true"
             android:exported="true"
@@ -171,7 +175,7 @@
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
                 <action android:name="android.provider.Telephony.SMS_DELIVER" />
             </intent-filter>
-        </receiver>
+        </receiver>-->
 
         <!-- BroadcastReceiver that listens for incoming MMS messages -->
         <receiver android:name=".usescases.sms.MmsReceiver"

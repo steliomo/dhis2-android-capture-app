@@ -86,15 +86,6 @@ android {
         exclude 'META-INF/rxjava.properties'
     }
 
-    signingConfigs {
-        release {
-            storeFile file('dhis_keystore.jks')
-            storePassword 'XwbwJOgmh0p]U'
-            keyAlias 'android@dhis2.org'
-            keyPassword 'XwbwJOgmh0p]U'
-        }
-    }
-
     buildTypes {
         debug {
             // custom application suffix which allows to
@@ -119,8 +110,6 @@ android {
             ext.enableCrashlytics = true
 
             resValue "string", "content_provider", "com.dhis2.provider"
-
-            signingConfig = signingConfigs.release
         }
 
         training {
