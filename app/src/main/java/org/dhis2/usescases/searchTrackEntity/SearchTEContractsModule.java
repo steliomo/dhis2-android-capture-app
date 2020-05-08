@@ -23,6 +23,7 @@ import org.hisp.dhis.android.core.program.Program;
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityAttribute;
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityType;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 
@@ -45,6 +46,8 @@ public class SearchTEContractsModule {
 
         void setPrograms(List<Program> programModels);
 
+        void setFiltersVisibility(boolean showFilters);
+
         void clearList(String uid);
 
         Flowable<RowAction> rowActionss();
@@ -52,6 +55,10 @@ public class SearchTEContractsModule {
         void clearData();
 
         void setTutorial();
+
+        void showAssignmentFilter();
+
+        void hideAssignmentFilter();
 
         void setProgramColor(String data);
 
@@ -86,11 +93,13 @@ public class SearchTEContractsModule {
         boolean isMapVisible();
 
         void openDashboard(String teiUid, String programUid, String enrollmentUid);
+
+        void goToEnrollment(String enrollmentUid, String programUid);
     }
 
     public interface Presenter {
 
-        void init(View view, String trackedEntityType, String initialProgram);
+        void init(String trackedEntityType);
 
         void onDestroy();
 
@@ -100,9 +109,9 @@ public class SearchTEContractsModule {
 
         void onClearClick();
 
-        void onFabClick(android.view.View view, boolean needsSearch);
+        void onFabClick(boolean needsSearch);
 
-        void onEnrollClick(android.view.View view);
+        void onEnrollClick();
 
         void onTEIClick(String teiUid, String enrollmentUid, boolean isOnline);
 
@@ -123,8 +132,6 @@ public class SearchTEContractsModule {
         Trio<PagedList<SearchTeiModel>, String, Boolean> getMessage(PagedList<SearchTeiModel> list);
 
         HashMap<String, String> getQueryData();
-
-        void initSearch(SearchTEContractsModule.View view);
 
         void onSyncIconClick(String teiUid);
 
@@ -149,5 +156,11 @@ public class SearchTEContractsModule {
         int getTEIColor();
 
         int getEnrollmentColor();
+
+        void initAssignmentFilter();
+
+        void checkFilters(boolean listResultIsOk);
+
+        void restoreQueryData(HashMap<String, String> queryData);
     }
 }

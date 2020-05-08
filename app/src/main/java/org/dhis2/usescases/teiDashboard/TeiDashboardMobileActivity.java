@@ -17,6 +17,7 @@ import android.widget.PopupMenu;
 
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -93,6 +94,7 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
     private MutableLiveData<Boolean> groupByStage;
     private MutableLiveData<Boolean> filtersShowing;
     private MutableLiveData<String> currentEnrollment;
+    private float elevation = 0f;
 
     public static Intent intent(Context context,
                                 String teiUid,
@@ -169,6 +171,8 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
                 presenter.handleShowHideFilters(showFilter);
             }
         });
+
+        elevation = ViewCompat.getElevation(binding.toolbar);
     }
 
     @Override
@@ -264,8 +268,7 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
             binding.teiTablePager.setAdapter(tabletAdapter);
             binding.dotsIndicator.setVisibility(programUid != null ? View.VISIBLE : View.GONE);
 
-            // TODO look into dots Indicator integration with viewPager 2
-            //binding.dotsIndicator.setViewPager(binding.teiPager);
+            binding.dotsIndicator.setViewPager(binding.teiTablePager);
             if (fromRelationship)
                 binding.teiTablePager.setCurrentItem(1, false);
 
@@ -436,7 +439,8 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
                 Intent intent = EnrollmentActivity.Companion.getIntent(this,
                         data.getStringExtra("GO_TO_ENROLLMENT"),
                         data.getStringExtra("GO_TO_ENROLLMENT_PROGRAM"),
-                        EnrollmentActivity.EnrollmentMode.NEW);
+                        EnrollmentActivity.EnrollmentMode.NEW,
+                        false);
                 startActivity(intent);
                 finish();
             }
@@ -647,12 +651,14 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
     public void hideTabsAndDisableSwipe() {
         binding.tabLayout.setVisibility(View.GONE);
         binding.teiPager.setUserInputEnabled(false);
+        ViewCompat.setElevation(binding.toolbar, 0);
     }
 
     @Override
     public void showTabsAndEnableSwipe() {
         binding.tabLayout.setVisibility(View.VISIBLE);
         binding.teiPager.setUserInputEnabled(true);
+        ViewCompat.setElevation(binding.toolbar, elevation);
     }
 
     @Override

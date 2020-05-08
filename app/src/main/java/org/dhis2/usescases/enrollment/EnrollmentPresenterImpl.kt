@@ -7,7 +7,6 @@ import io.reactivex.flowables.ConnectableFlowable
 import io.reactivex.functions.BiFunction
 import io.reactivex.processors.FlowableProcessor
 import io.reactivex.processors.PublishProcessor
-import java.util.concurrent.TimeUnit
 import kotlin.collections.set
 import org.dhis2.Bindings.profilePicturePath
 import org.dhis2.Bindings.toDate
@@ -18,6 +17,7 @@ import org.dhis2.data.forms.dataentry.StoreResult
 import org.dhis2.data.forms.dataentry.ValueStore
 import org.dhis2.data.forms.dataentry.ValueStoreImpl
 import org.dhis2.data.forms.dataentry.fields.FieldViewModel
+import org.dhis2.data.forms.dataentry.fields.display.DisplayViewModel
 import org.dhis2.data.forms.dataentry.fields.option_set.OptionSetViewModel
 import org.dhis2.data.forms.dataentry.fields.section.SectionViewModel
 import org.dhis2.data.forms.dataentry.fields.spinner.SpinnerViewModel
@@ -71,6 +71,7 @@ class EnrollmentPresenterImpl(
     private var mandatoryFields = mutableMapOf<String, String>()
     private var uniqueFields = mutableMapOf<String, String>()
     private val backButtonProcessor: FlowableProcessor<Boolean> = PublishProcessor.create()
+    private var showErrors: Boolean = false
 
     fun init() {
         view.setSaveButtonVisible(false)
@@ -288,7 +289,7 @@ class EnrollmentPresenterImpl(
                 iterator.set(sectionViewModel)
             }
 
-            if (field !is SectionViewModel) {
+            if (field !is SectionViewModel && field !is DisplayViewModel) {
                 val isUnique =
                     d2.trackedEntityModule().trackedEntityAttributes().uid(field.uid()).blockingGet()?.unique() ?: false
                 var uniqueValueAlreadyExist: Boolean
@@ -304,7 +305,7 @@ class EnrollmentPresenterImpl(
                     errorFields[field.programStageSection() ?: section] = field.label()
                 }
                 if (field.mandatory() && field.value().isNullOrEmpty()) {
-                    mandatoryFields[field.programStageSection() ?: section] = field.label()
+                    mandatoryFields[field.label()] = field.programStageSection() ?: section
                 }
             }
 
@@ -314,6 +315,12 @@ class EnrollmentPresenterImpl(
             ) {
                 iterator.remove()
             }
+        }
+        val sections = finalList.filterIsInstance<SectionViewModel>()
+        sections.takeIf { showErrors }?.forEach { section ->
+            var errors = 0;
+            repeat(mandatoryFields.filter { it.value == section.uid() }.size) { errors++}
+            finalList[finalList.indexOf(section)] = section.withErrors(errors)
         }
         return finalList
     }
@@ -346,8 +353,6 @@ class EnrollmentPresenterImpl(
     fun subscribeToBackButton() {
         disposable.add(
             backButtonProcessor
-                .doOnNext { view.requestFocus() }
-                .debounce(1, TimeUnit.SECONDS, schedulerProvider.io())
                 .observeOn(schedulerProvider.ui())
                 .subscribe(
                     { view.performSaveClick() },
@@ -581,6 +586,8 @@ class EnrollmentPresenterImpl(
                 false
             }
             mandatoryFields.isNotEmpty() -> {
+                showErrors = true
+                fieldsFlowable.onNext(true)
                 view.showMissingMandatoryFieldsMessage(mandatoryFields)
                 false
             }

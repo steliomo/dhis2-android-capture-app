@@ -65,7 +65,7 @@ import rx.subjects.BehaviorSubject;
 import timber.log.Timber;
 
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
-import static org.dhis2.usescases.eventsWithoutRegistration.eventInitial.EventInitialPresenter.ACCESS_COARSE_LOCATION_PERMISSION_REQUEST;
+import static org.dhis2.usescases.eventsWithoutRegistration.eventInitial.EventInitialPresenter.ACCESS_LOCATION_PERMISSION_REQUEST;
 import static org.dhis2.utils.analytics.AnalyticsConstants.CLICK;
 import static org.dhis2.utils.analytics.AnalyticsConstants.SHOW_HELP;
 import static org.dhis2.utils.session.PinDialogKt.PIN_DIALOG_TAG;
@@ -88,8 +88,8 @@ public abstract class ActivityGlobalAbstract extends AppCompatActivity
     public void requestLocationPermission(CoordinatesView coordinatesView) {
         this.coordinatesView = coordinatesView;
         ActivityCompat.requestPermissions((ActivityGlobalAbstract) getContext(),
-                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-                ACCESS_COARSE_LOCATION_PERMISSION_REQUEST);
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                ACCESS_LOCATION_PERMISSION_REQUEST);
     }
 
     public enum Status {
@@ -118,7 +118,7 @@ public abstract class ActivityGlobalAbstract extends AppCompatActivity
             prefs.edit().remove(Constants.PROGRAM_THEME).apply();
         }
 
-        if (!(this instanceof SplashActivity))
+        if (!(this instanceof SplashActivity) && !(this instanceof LoginActivity))
             setTheme(prefs.getInt(Constants.PROGRAM_THEME, prefs.getInt(Constants.THEME, R.style.AppTheme)));
 
         Crashlytics.setString(Constants.SERVER, prefs.getString(Constants.SERVER, null));
@@ -153,7 +153,7 @@ public abstract class ActivityGlobalAbstract extends AppCompatActivity
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
-            case ACCESS_COARSE_LOCATION_PERMISSION_REQUEST:
+            case ACCESS_LOCATION_PERMISSION_REQUEST:
                 if (grantResults[0] == PERMISSION_GRANTED) {
                     coordinatesView.getLocation();
                 }
@@ -383,8 +383,8 @@ public abstract class ActivityGlobalAbstract extends AppCompatActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK && requestCode == Constants.RQ_MAP_LOCATION_VIEW) {
             if (coordinatesView != null && data.getExtras() != null) {
-                FeatureType locationType = FeatureType.valueOf(data.getStringExtra(MapSelectorActivity.Companion.getLOCATION_TYPE_EXTRA()));
-                String dataExtra = data.getStringExtra(MapSelectorActivity.Companion.getDATA_EXTRA());
+                FeatureType locationType = FeatureType.valueOf(data.getStringExtra(MapSelectorActivity.LOCATION_TYPE_EXTRA));
+                String dataExtra = data.getStringExtra(MapSelectorActivity.DATA_EXTRA);
                 Geometry geometry;
                 if (locationType == FeatureType.POINT) {
                     Type type = new TypeToken<List<Double>>() {

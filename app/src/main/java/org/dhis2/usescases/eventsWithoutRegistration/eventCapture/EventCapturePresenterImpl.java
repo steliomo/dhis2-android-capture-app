@@ -5,6 +5,7 @@ import android.os.Handler;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import androidx.databinding.ObservableField;
 
 import org.dhis2.R;
@@ -218,22 +219,22 @@ public class EventCapturePresenterImpl implements EventCaptureContract.Presenter
                                                     HashMap<String, List<FieldViewModel>> fieldMap = new HashMap<>();
                                                     List<String> optionSets = new ArrayList<>();
                                                     for (FieldViewModel fieldViewModel : fields) {
-                                                        String fieldSection = fieldViewModel.programStageSection() != null ?
-                                                                fieldViewModel.programStageSection() :
-                                                                "";
-                                                        if (!fieldMap.containsKey(fieldSection)) {
-                                                            fieldMap.put(fieldSection, new ArrayList<>());
-                                                        }
-                                                        fieldMap.get(fieldSection).add(fieldViewModel);
+                                                        String fieldSection = getFieldSection(fieldViewModel);
+                                                        if(!fieldSection.isEmpty() || sectionList.size() == 1) {
+                                                            if (!fieldMap.containsKey(fieldSection)) {
+                                                                fieldMap.put(fieldSection, new ArrayList<>());
+                                                            }
+                                                            fieldMap.get(fieldSection).add(fieldViewModel);
 
-                                                        if (fieldViewModel.optionSet() == null || !(fieldViewModel instanceof ImageViewModel)) {
-                                                            totalFields++;
-                                                        } else if (!optionSets.contains(fieldViewModel.optionSet())) {
-                                                            optionSets.add(fieldViewModel.optionSet());
-                                                            totalFields++;
+                                                            if (fieldViewModel.optionSet() == null || !(fieldViewModel instanceof ImageViewModel)) {
+                                                                totalFields++;
+                                                            } else if (!optionSets.contains(fieldViewModel.optionSet())) {
+                                                                optionSets.add(fieldViewModel.optionSet());
+                                                                totalFields++;
+                                                            }
+                                                            if (fieldViewModel instanceof UnsupportedViewModel || fieldViewModel instanceof DisplayViewModel)
+                                                                unsupportedFields++;
                                                         }
-                                                        if (fieldViewModel instanceof UnsupportedViewModel)
-                                                            unsupportedFields++;
                                                     }
 
                                                     List<EventSectionModel> eventSectionModels = new ArrayList<>();
@@ -271,7 +272,7 @@ public class EventCapturePresenterImpl implements EventCaptureContract.Presenter
                                                                             cont,
                                                                             sectionModel.renderType()
                                                                     ));
-                                                            if (isOpen) {
+                                                            if (isOpen && fieldMap.get(sectionModel.sectionUid()) != null) {
                                                                 finalFieldList.addAll(fieldMap.get(sectionModel.sectionUid()));
                                                             }
 
@@ -295,8 +296,10 @@ public class EventCapturePresenterImpl implements EventCaptureContract.Presenter
                                                         }
                                                     }
 
-                                                    if (fieldMap.get("") != null) {
-                                                        finalFieldList.addAll(fieldMap.get(""));
+                                                    finalFieldList.add(SectionViewModel.createClosingSection());
+
+                                                    if (fieldMap.containsKey("display") && fieldMap.get("display") != null) {
+                                                        finalFieldList.addAll(fieldMap.get("display"));
                                                     }
 
                                                     return Pair.create(eventSectionModels, finalFieldList);
@@ -342,6 +345,19 @@ public class EventCapturePresenterImpl implements EventCaptureContract.Presenter
         fieldFlowable.connect();
     }
 
+    @VisibleForTesting
+    public String getFieldSection(FieldViewModel fieldViewModel) {
+        String fieldSection;
+        if (fieldViewModel instanceof DisplayViewModel) {
+            fieldSection = "display";
+        } else {
+            fieldSection = fieldViewModel.programStageSection() != null ?
+                    fieldViewModel.programStageSection() :
+                    "";
+        }
+        return fieldSection;
+    }
+
     private float calculateCompletionPercentage(int completedFields, int totals) {
         if (totals == 0) {
             return 100;
@@ -383,17 +399,17 @@ public class EventCapturePresenterImpl implements EventCaptureContract.Presenter
                             .subscribeOn(schedulerProvider.io())
                             .observeOn(schedulerProvider.ui())
                             .subscribe(
-                                    hasExpiredResult -> this.hasExpired = hasExpiredResult && eventCaptureRepository.isEventExpired(eventUid),
+                                    hasExpiredResult -> this.hasExpired = hasExpiredResult && !eventCaptureRepository.isEventEditable(eventUid),
                                     Timber::e
                             )
             );
         else
-            this.hasExpired = eventCaptureRepository.isEventExpired(eventUid);
+            this.hasExpired = !eventCaptureRepository.isEventEditable(eventUid);
     }
 
     @Override
     public void onBackClick() {
-        view.back();
+        view.goBack();
     }
 
     @Override
@@ -600,6 +616,7 @@ public class EventCapturePresenterImpl implements EventCaptureContract.Presenter
                                             currentSectionPosition.onNext(0);
                                             view.showSnackBar(R.string.event_reopened);
                                             eventStatus = EventStatus.ACTIVE;
+                                            goToSection(currentSection.get());
                                         }
                                     }
                                 },

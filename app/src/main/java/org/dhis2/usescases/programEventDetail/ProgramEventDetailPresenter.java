@@ -112,9 +112,10 @@ public class ProgramEventDetailPresenter implements ProgramEventDetailContract.P
 
         compositeDisposable.add(
                 mapProcessor
-                        .flatMap(unit ->
+                        .observeOn(schedulerProvider.io())
+                        .switchMap(unit ->
                                 filterManager.asFlowable()
-                                        .startWith(filterManager)
+                                        .startWith(FilterManager.getInstance())
                                         .flatMap(filterManager -> eventRepository.filteredEventsForMap(
                                                 filterManager.getPeriodFilters(),
                                                 filterManager.getOrgUnitUidsFilters(),
@@ -231,5 +232,10 @@ public class ProgramEventDetailPresenter implements ProgramEventDetailContract.P
     public void clearFilterClick() {
         filterManager.clearAllFilters();
         view.clearFilters();
+    }
+
+    @Override
+    public boolean hasAssignment() {
+        return eventRepository.hasAssignment();
     }
 }

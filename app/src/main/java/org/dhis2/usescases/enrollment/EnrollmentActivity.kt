@@ -14,12 +14,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CircleCrop
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
+import com.crashlytics.android.Crashlytics
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import io.reactivex.Flowable
 import java.io.File
 import javax.inject.Inject
 import org.dhis2.App
+import org.dhis2.Bindings.isKeyboardOpened
 import org.dhis2.R
 import org.dhis2.data.forms.dataentry.DataEntryAdapter
 import org.dhis2.data.forms.dataentry.DataEntryArguments
@@ -53,6 +55,7 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
 
     enum class EnrollmentMode { NEW, CHECK }
 
+    private var forRelationship: Boolean = false
     @Inject
     lateinit var presenter: EnrollmentPresenterImpl
 
@@ -63,6 +66,7 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
         const val ENROLLMENT_UID_EXTRA = "ENROLLMENT_UID_EXTRA"
         const val PROGRAM_UID_EXTRA = "PROGRAM_UID_EXTRA"
         const val MODE_EXTRA = "MODE_EXTRA"
+        const val FOR_RELATIONSHIP = "FOR_RELATIONSHIP"
         const val RQ_ENROLLMENT_GEOMETRY = 1023
         const val RQ_INCIDENT_GEOMETRY = 1024
         const val RQ_EVENT = 1025
@@ -72,12 +76,17 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
             context: Context,
             enrollmentUid: String,
             programUid: String,
-            enrollmentMode: EnrollmentMode
+            enrollmentMode: EnrollmentMode,
+            forRelationship: Boolean? = false
         ): Intent {
             val intent = Intent(context, EnrollmentActivity::class.java)
             intent.putExtra(ENROLLMENT_UID_EXTRA, enrollmentUid)
             intent.putExtra(PROGRAM_UID_EXTRA, programUid)
             intent.putExtra(MODE_EXTRA, enrollmentMode.name)
+            intent.putExtra(FOR_RELATIONSHIP, forRelationship)
+            if (forRelationship == true) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT)
+            }
             return intent
         }
     }
@@ -95,6 +104,7 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
                 EnrollmentMode.valueOf(intent.getStringExtra(MODE_EXTRA))
             )
         ).inject(this)
+        forRelationship = intent.getBooleanExtra(FOR_RELATIONSHIP, false)
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.enrollment_activity)
         binding.view = this
@@ -136,8 +146,6 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
         if (resultCode == Activity.RESULT_OK) {
             when (requestCode) {
                 RQ_INCIDENT_GEOMETRY, RQ_ENROLLMENT_GEOMETRY -> {
@@ -158,7 +166,9 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
                         presenter.updateFields()
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        Toast.makeText(this, "Something went wrong", Toast.LENGTH_LONG).show()
+                        Toast.makeText(
+                            this, getString(R.string.something_wrong), Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
                 CAMERA_REQUEST -> {
@@ -166,8 +176,15 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
                         FileResourceDirectoryHelper.getFileResourceDirectory(this),
                         "tempFile.png"
                     )
-                    presenter.saveFile(uuid, if (file.exists()) file.path else null)
-                    presenter.updateFields()
+                    try {
+                        presenter.saveFile(uuid, if (file.exists()) file.path else null)
+                        presenter.updateFields()
+                    } catch (e: Exception) {
+                        Crashlytics.logException(e)
+                        Toast.makeText(
+                            this, getString(R.string.something_wrong), Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
                 RQ_QR_SCANNER -> {
                     scanTextView.updateScanResult(data!!.getStringExtra(Constants.EXTRA_DATA))
@@ -175,6 +192,7 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
                 RQ_EVENT -> openDashboard(presenter.getEnrollment().uid()!!)
             }
         }
+        super.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun sectionFlowable(): Flowable<String> {
@@ -220,11 +238,18 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
     }
 
     override fun openDashboard(enrollmentUid: String) {
-        val bundle = Bundle()
-        bundle.putString(PROGRAM_UID, presenter.getProgram().uid())
-        bundle.putString(TEI_UID, presenter.getEnrollment().trackedEntityInstance())
-        bundle.putString(ENROLLMENT_UID, enrollmentUid)
-        startActivity(TeiDashboardMobileActivity::class.java, bundle, true, false, null)
+        if (forRelationship) {
+            val intent = Intent()
+            intent.putExtra("TEI_A_UID", presenter.getEnrollment().trackedEntityInstance())
+            setResult(Activity.RESULT_OK, intent)
+            finish()
+        } else {
+            val bundle = Bundle()
+            bundle.putString(PROGRAM_UID, presenter.getProgram().uid())
+            bundle.putString(TEI_UID, presenter.getEnrollment().trackedEntityInstance())
+            bundle.putString(ENROLLMENT_UID, enrollmentUid)
+            startActivity(TeiDashboardMobileActivity::class.java, bundle, true, false, null)
+        }
     }
 
     override fun rowActions(): Flowable<RowAction> {
@@ -241,16 +266,8 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
         AlertBottomDialog.instance
             .setTitle(getString(R.string.unable_to_complete))
             .setMessage(getString(R.string.missing_mandatory_fields))
-            .setEmptyMandatoryFields(emptyMandatoryFields.values.toList())
+            .setEmptyMandatoryFields(emptyMandatoryFields.keys.toList())
             .show(supportFragmentManager, AlertBottomDialog::class.java.simpleName)
-
-        val sections = adapter.currentList.toMutableList()
-        sections.forEach {
-            if (emptyMandatoryFields.containsKey(it.uid())) {
-                sections[sections.indexOf(it)] = it.withError("mandatory field missing")
-            }
-        }
-        adapter.swap(sections) {}
     }
 
     override fun showErrorFieldsMessage(errorFields: List<String>) {
@@ -262,10 +279,15 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
     }
 
     override fun onBackPressed() {
-        if (mode == EnrollmentMode.CHECK) {
-            presenter.backIsClicked()
+        if(!isKeyboardOpened()) {
+            if (mode == EnrollmentMode.CHECK) {
+                presenter.backIsClicked()
+            } else {
+                showDeleteDialog()
+            }
         } else {
-            showDeleteDialog()
+            currentFocus?.apply { clearFocus() }
+            hideKeyboard()
         }
     }
 
@@ -323,25 +345,27 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
         if (mode != EnrollmentMode.NEW) {
             binding.title.visibility = View.GONE
             binding.teiDataHeader.root.visibility = View.VISIBLE
-            binding.teiDataHeader.mainAttributes.setTextColor(Color.WHITE)
-            binding.teiDataHeader.secundaryAttribute.setTextColor(Color.WHITE)
-            var firstAttr = ""
-            var secondAttr = ""
-            var thirdAttr = ""
-            if (attrList.size > 1) {
-                firstAttr = attrList[0]
+
+            val attrListNotEmpty = attrList.filter { it.isNotEmpty() }
+            binding.teiDataHeader.mainAttributes.apply {
+                when (attrListNotEmpty.size) {
+                    0 -> visibility = View.GONE
+                    1 -> text = attrListNotEmpty[0]
+                    else -> text = String.format("%s %s", attrListNotEmpty[0], attrListNotEmpty[1])
+                }
+                setTextColor(Color.WHITE)
             }
-            if (attrList.size > 2) {
-                secondAttr = attrList[1]
+            binding.teiDataHeader.secundaryAttribute.apply {
+                when (attrListNotEmpty.size) {
+                    0, 1, 2 -> visibility = View.GONE
+                    else -> text = attrListNotEmpty[2]
+                }
+                setTextColor(Color.WHITE)
             }
-            if (attrList.size >= 3) {
-                thirdAttr = attrList[2]
-            }
-            binding.teiDataHeader.mainAttributes.text =
-                String.format("%s %s", firstAttr, secondAttr)
-            binding.teiDataHeader.secundaryAttribute.text = thirdAttr
+
             if (profileImage.isEmpty()) {
                 binding.teiDataHeader.teiImage.visibility = View.GONE
+                binding.teiDataHeader.imageSeparator.visibility = View.GONE
             } else {
                 Glide.with(this).load(File(profileImage))
                     .transition(DrawableTransitionOptions.withCrossFade())

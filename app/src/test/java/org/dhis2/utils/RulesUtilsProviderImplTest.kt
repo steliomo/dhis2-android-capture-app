@@ -43,9 +43,7 @@ class RulesUtilsProviderImplTest {
     fun setUp() {
         ruleUtils = RulesUtilsProviderImpl()
         fieldFactory = FieldViewModelFactoryImpl(
-            "", "",
-            "", "", "", "",
-            "", "", ""
+            ValueType.values().map { it to it.name }.toMap()
         )
         testFieldViewModels = getTestingFieldViewModels().associateBy { it.uid() }.toMutableMap()
     }
@@ -221,9 +219,6 @@ class RulesUtilsProviderImplTest {
         )
 
         verify(actionCallbacks, times(1)).setHideSection(testingSectionUid)
-        verify(actionCallbacks, times(1)).save("uid3", null)
-        verify(actionCallbacks, times(1)).save("uid4", null)
-        verify(actionCallbacks, times(1)).save("uid5", null)
     }
 
     @Test

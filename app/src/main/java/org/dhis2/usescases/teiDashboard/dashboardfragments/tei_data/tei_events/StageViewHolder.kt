@@ -30,7 +30,8 @@ internal class StageViewHolder(
             )
         )
 
-        binding.programStageIcon.setBackgroundColor(color)
+        binding.programStageIcon.background =
+            ColorUtils.tintDrawableWithColor(binding.programStageIcon.background, color)
         binding.programStageIcon.setImageResource(
             ResourceManager(itemView.context).getObjectStyleDrawableResource(
                 stage.style().icon(),
@@ -38,9 +39,16 @@ internal class StageViewHolder(
             )
         )
         binding.lastUpdatedEvent.text = eventItem.lastUpdate.toDateSpan(itemView.context)
+        val stageNotRepeatableZeroCount = stage.repeatable() != true &&
+                eventItem.eventCount == 0
+        val stageRepeatableZeroCount = stage.repeatable() == true &&
+                eventItem.eventCount == 0
+        val stageRepeatableCountSelected = stage.repeatable() == true &&
+                eventItem.eventCount > 0 && eventItem.isSelected
+
         binding.addStageButton.visibility =
-            if (stage.repeatable() == true &&
-                eventItem.canAddNewEvent || eventItem.eventCount == 0
+            if (eventItem.canAddNewEvent &&
+                (stageNotRepeatableZeroCount || stageRepeatableZeroCount || stageRepeatableCountSelected)
             ) {
                 View.VISIBLE
             } else {

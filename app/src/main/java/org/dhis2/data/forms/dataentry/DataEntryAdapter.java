@@ -4,12 +4,14 @@ import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.core.view.ViewCompat;
 import androidx.databinding.ObservableField;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.MutableLiveData;
 import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView.ViewHolder;
 
+import org.dhis2.Bindings.ExtensionsKt;
 import org.dhis2.R;
 import org.dhis2.data.forms.dataentry.fields.FieldViewModel;
 import org.dhis2.data.forms.dataentry.fields.Row;
@@ -134,10 +136,10 @@ public final class DataEntryAdapter extends ListAdapter<FieldViewModel, ViewHold
         rows.add(UNSUPPORTED, new UnsupportedRow(layoutInflater));
         rows.add(LONG_TEXT, new EditTextRow(layoutInflater, processor, true, dataEntryArguments.renderType(), true, currentFocusUid));
         rows.add(DISPLAY, new DisplayRow(layoutInflater));
-        rows.add(PICTURE, new PictureRow(layoutInflater, processor, true));
+        rows.add(PICTURE, new PictureRow(fragmentManager, layoutInflater, processor, true));
         rows.add(SCAN_CODE, new ScanTextRow(layoutInflater, processor, true));
         rows.add(SECTION, new SectionRow(layoutInflater, selectedSection, sectionProcessor));
-        rows.add(OPTION_SET_SELECT, new OptionSetRow(layoutInflater, processor, true,rendering, currentFocusUid));
+        rows.add(OPTION_SET_SELECT, new OptionSetRow(layoutInflater, processor, true, rendering, currentFocusUid));
     }
 
     public DataEntryAdapter(@NonNull LayoutInflater layoutInflater,
@@ -171,10 +173,10 @@ public final class DataEntryAdapter extends ListAdapter<FieldViewModel, ViewHold
         rows.add(UNSUPPORTED, new UnsupportedRow(layoutInflater));
         rows.add(LONG_TEXT, new EditTextRow(layoutInflater, processor, true, dataEntryArguments.renderType(), true, currentFocusUid));
         rows.add(DISPLAY, new DisplayRow(layoutInflater));
-        rows.add(PICTURE, new PictureRow(layoutInflater, processor, true));
+        rows.add(PICTURE, new PictureRow(fragmentManager, layoutInflater, processor, true));
         rows.add(SCAN_CODE, new ScanTextRow(layoutInflater, processor, true));
         rows.add(SECTION, new SectionRow(layoutInflater, selectedSection, sectionProcessor));
-        rows.add(OPTION_SET_SELECT, new OptionSetRow(layoutInflater, processor, true,rendering, currentFocusUid));
+        rows.add(OPTION_SET_SELECT, new OptionSetRow(layoutInflater, processor, true, rendering, currentFocusUid));
     }
 
     @NonNull
@@ -197,7 +199,20 @@ public final class DataEntryAdapter extends ListAdapter<FieldViewModel, ViewHold
         } else {
             ((SectionHolder) holder).setBottomShadow(
                     position > 0 && getItemViewType(position - 1) != SECTION);
+            ((SectionHolder) holder).setLastSectionHeight(
+                    position == getItemCount()-1 && getItemViewType(position - 1) != SECTION);
+            ((SectionHolder)holder).setSectionNumber(getSectionNumber(position));
         }
+    }
+
+    private int getSectionNumber(int sectionPosition){
+        int sectionNumber = 1;
+        for(int i = 0; i < sectionPosition;i++){
+            if(getItemViewType(i) == SECTION){
+                sectionNumber++;
+            }
+        }
+        return sectionNumber;
     }
 
     @Override

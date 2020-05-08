@@ -217,6 +217,7 @@ public class SyncManagerPresenter implements SyncManagerContracts.Presenter {
 
     @Override
     public void syncMeta(int seconds, String scheduleTag) {
+        preferenceProvider.setValue(Constants.TIME_META, seconds);
         workManagerController.cancelUniqueWork(scheduleTag);
         WorkerItem workerItem = new WorkerItem(scheduleTag, WorkerType.METADATA, (long) seconds, null, null, ExistingPeriodicWorkPolicy.REPLACE);
         workManagerController.enqueuePeriodicWork(workerItem);
@@ -272,16 +273,18 @@ public class SyncManagerPresenter implements SyncManagerContracts.Presenter {
         try {
             workManagerController.cancelAllWork();
             workManagerController.pruneWork();
-            d2.userModule().logOut().blockingAwait();
-            d2.wipeModule().wipeEverything();
             // clearing cache data
             deleteDir(view.getAbstracContext().getCacheDir());
 
             preferenceProvider.clear();
 
-            view.startActivity(LoginActivity.class, null, true, true, null);
+            d2.wipeModule().wipeEverything();
+            d2.userModule().logOut().blockingAwait();
+
         } catch (Exception e) {
             Timber.e(e);
+        } finally {
+            view.startActivity(LoginActivity.class, null, true, true, null);
         }
     }
 

@@ -1,22 +1,17 @@
 package org.dhis2.Bindings
 
+import android.content.res.Resources
+import android.graphics.Rect
+import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import org.dhis2.App
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.common.ValueType
-import org.hisp.dhis.android.core.event.Event
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityInstance
 
-/**
- * QUADRAM. Created by ppajuelo on 11/04/2019.
- */
 fun <T : Any?> MutableLiveData<T>.default(initialValue: T) = this.apply { setValue(initialValue) }
-
-fun List<Event>.toUids(): List<String> {
-    return map { it.uid() }
-}
 
 fun TrackedEntityInstance.profilePicturePath(d2: D2, programUid: String?): String {
     var path: String? = null
@@ -66,4 +61,25 @@ fun Fragment.app(): App {
 
 fun AppCompatActivity.app(): App {
     return applicationContext as App
+}
+
+val Int.dp: Int
+    get() = (this * Resources.getSystem().displayMetrics.density).toInt()
+
+val Int.px: Int
+    get() = (this / Resources.getSystem().displayMetrics.density).toInt()
+
+fun AppCompatActivity.isKeyboardOpened(): Boolean {
+    val r = Rect()
+    val keyboardVisibilityThreshold = 100
+
+    val activityRoot = (findViewById<ViewGroup>(android.R.id.content)).getChildAt(0)
+    val visibleThreshold = keyboardVisibilityThreshold.dp
+
+    if (activityRoot == null) return false
+    activityRoot.getWindowVisibleDisplayFrame(r)
+
+    val heightDiff = activityRoot.rootView.height - r.height()
+
+    return heightDiff > visibleThreshold
 }

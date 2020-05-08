@@ -225,7 +225,6 @@ sonarqube {
 }
 
 dependencies {
-    releaseImplementation project(':core')
     debugImplementation project(':core')
     betaImplementation project(':core')
 
@@ -254,13 +253,13 @@ dependencies {
 
     //region DHIS2 LIBRARIES
 
-   /* releaseImplementation("org.hisp.dhis:android-core:${libraries.dhis2sdk}") {
+   releaseImplementation("org.hisp.dhis:android-core:${libraries.dhis2sdk}") {
         exclude group: "org.hisp.dhis", module: "core-rules"
     }
 
-    releaseImplementation("org.hisp.dhis.rules:rule-engine:${libraries.ruleEngine}") {
-        exclude group: "junit", module: "junit"
-    }*/
+    /*  releaseImplementation("org.hisp.dhis.rules:rule-engine:${libraries.ruleEngine}") {
+         exclude group: "junit", module: "junit"
+     }*/
     //endregion
 
     //region UI LIBRARIES
@@ -312,9 +311,11 @@ dependencies {
     //endregion
 
     // Kujaku dependencies
-    implementation 'io.ona.kujaku:library:0.7.7'
+//    implementation 'io.ona.kujaku:library:0.7.7'
     implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:8.3.0'
     implementation 'com.mapbox.mapboxsdk:mapbox-android-plugin-markerview-v8:0.3.0'
+    implementation 'com.mapbox.mapboxsdk:mapbox-android-plugin-annotation-v9:0.8.0'
+
 
 
     // Jake Wharton libraries
@@ -376,7 +377,7 @@ dependencies {
     implementation 'me.toptas.fancyshowcase:fancyshowcaseview:1.1.5'
 
     //Lottie animations
-    implementation 'com.airbnb.android:lottie:2.8.0'
+    implementation 'com.airbnb.android:lottie:3.4.0'
 
     //Glide load images
     implementation 'com.github.bumptech.glide:glide:4.9.0'
@@ -391,7 +392,7 @@ dependencies {
 
     implementation "com.google.android.gms:play-services-analytics:${libraries.analytics}"
     //implementation 'com.github.pwittchen:rxbiometric:0.1.0'
-    implementation 'co.infinum:goldfinger-rx:1.2.1'
+    implementation 'co.infinum:goldfinger-rx:2.0.1'
     implementation "de.adorsys.android:securestoragelibrary:${libraries.latestSecureStorageVersion}"
 
 
