@@ -45,7 +45,7 @@ class RulesRepository(private val d2: D2) {
 
             val userRoleUids =
                 UidsHelper.getUidsList(d2.userModule().userRoles().blockingGet())
-            supData["USER"] = userRoleUids
+            supData["USER"] = userRoleUids as MutableList<String>
             supData["android_version"] = arrayListOf(Build.VERSION.SDK_INT.toString())
 
             supData

@@ -41,6 +41,7 @@ class GranularSyncContracts {
         fun prepareConflictAdapter(conflicts: MutableList<TrackerImportConflict>)
         fun emptyEnrollmentError(): String
         fun unsupportedTask(): String
+        fun sendSMS(message: String, number: String)
     }
 
     interface Presenter : AbstractActivityContracts.Presenter {

@@ -9,7 +9,6 @@ import org.dhis2.utils.filters.Filters
 import org.dhis2.utils.filters.sorting.SortingItem
 import org.dhis2.utils.filters.sorting.SortingStatus
 import org.hisp.dhis.android.core.D2
-import org.hisp.dhis.android.core.arch.repositories.scope.RepositoryScope
 import org.hisp.dhis.android.core.event.EventStatus
 
 class SearchSortingValueSetter(
@@ -50,13 +49,13 @@ class SearchSortingValueSetter(
         val sortedEvents = d2.eventModule().events()
             .byEnrollmentUid().eq(teiModel.selectedEnrollment.uid())
             .byDeleted().isFalse
-            .orderByTimeline(
+            /*.orderByTimeline(
                 if (sortingStatus === SortingStatus.ASC) {
                     RepositoryScope.OrderByDirection.ASC
                 } else {
                     RepositoryScope.OrderByDirection.DESC
                 }
-            )
+            )*/
             .blockingGet()
         if (sortedEvents != null && sortedEvents.isNotEmpty()) {
             val sortedEvent = sortedEvents.first()

@@ -2,10 +2,14 @@ package org.dhis2.utils.granularsync
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity.RESULT_CANCELED
+import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.AnimatedVectorDrawable
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.text.Spannable
@@ -183,6 +187,17 @@ class SyncStatusDialog private constructor(
         retainInstance = true
 
         return binding!!.root
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQ_SMS) {
+            when (resultCode) {
+                RESULT_OK -> { }
+                RESULT_CANCELED -> { }
+                else -> { }
+            }
+        }
     }
 
     override fun showTitle(displayName: String) {
@@ -561,5 +576,20 @@ class SyncStatusDialog private constructor(
         ) {
             syncSMS()
         }
+    }
+
+    override fun sendSMS(message: String, number: String) {
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = Uri.parse("smsto:$number") // This ensures only SMS apps respond
+            putExtra("sms_body", message)
+        }
+
+        if (context != null) {
+            startActivityForResult(intent, REQ_SMS)
+        }
+    }
+
+    companion object {
+        const val REQ_SMS = 1
     }
 }
