@@ -5,7 +5,6 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'io.fabric'
 apply plugin: 'hu.supercluster.paperwork'
-apply from: 'buildscripts/jacoco.gradle'
 
 def libraries = rootProject.ext.libraries
 def versions = rootProject.ext.versions
@@ -91,7 +90,7 @@ android {
 
             // jacoco test coverage reports both for
             // androidTest and test source sets
-            testCoverageEnabled = true
+            testCoverageEnabled = false
 
             // Disable fabric build ID generation for debug builds
 //          ext.enableCrashlytics = false
@@ -190,22 +189,20 @@ android {
 
 sonarqube {
     properties {
-        property "sonar.host.url", "localhost:9000"
-        property "sonar.login", "admin"
-        property "sonar.password", "admin"
-
-        property "sonar.projectKey", "dhis2-android-capture-app"
-        property "sonar.projectName", "dhis2-android-capture-app"
-        property "sonar.projectVersion", "${version}"
+        property "sonar.projectKey", "dhis2_dhis2-android-capture-app"
+        property "sonar.organization", "dhis2"
+        property "sonar.host.url", "https://sonarcloud.io"
 
         property "sonar.sources", "src/main/"
-
         property "sonar.java.source", "7"
+        property "sonar.exclusions", "**/*Generated.java"
 
-        property "sonar.android.lint.report", "build/outputs/lint-results.xml"
+
+//        property "sonar.projectVersion", "${version}"
+//        property "sonar.android.lint.report", "build/outputs/lint-results.xml"
 //        property "sonar.java.test.binaries", "${project.buildDir}/intermediates/classes/debug"
 //        property "sonar.java.test.binaries", "${project.buildDir}/intermediates/classes/debug"
-        property "sonar.jacoco.reportPath",fileTree(dir: project.projectDir, includes: ['**/*.exec'])
+//        property "sonar.jacoco.reportPath",fileTree(dir: project.projectDir, includes: ['**/*.exec'])
 //        property "sonar.jacoco.itReportPath", instrumentationFileName
     }
 }
