@@ -36,19 +36,19 @@ public class ServerModule {
 
     @Provides
     @PerServer
-    D2 sdk() {
+    public D2 sdk() {
         return D2Manager.getD2();
     }
 
     @Provides
     @PerServer
-    UserManager configurationRepository(D2 d2) {
+    public UserManager configurationRepository(D2 d2) {
         return new UserManagerImpl(d2);
     }
 
     @Provides
     @PerServer
-    DataBaseExporter dataBaseExporter(D2 d2) {
+    public DataBaseExporter dataBaseExporter(D2 d2) {
         return new DataBaseExporterImpl(d2);
     }
 
@@ -73,7 +73,7 @@ public class ServerModule {
 
     @Provides
     @PerServer
-    RulesUtilsProvider rulesUtilsProvider(D2 d2) {
+    public RulesUtilsProvider rulesUtilsProvider(D2 d2) {
         return new RulesUtilsProviderImpl(d2);
     }
 }

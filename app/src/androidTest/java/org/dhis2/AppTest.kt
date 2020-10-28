@@ -1,5 +1,6 @@
 package org.dhis2
 
+import org.dhis2.common.di.ServerTestingModule
 import org.dhis2.common.di.TestingInjector
 import org.dhis2.common.preferences.PreferencesTestingModule
 import org.dhis2.data.schedulers.SchedulerModule
@@ -32,10 +33,10 @@ class AppTest : App() {
     override fun setUpServerComponent() {
     //    D2Manager.setTestingDatabase(DB_TO_IMPORT, USERNAME)
     //    D2Manager.blockingInstantiateD2(ServerModule.getD2Configuration(this))
-        TestingD2Manager.instantiateD2(ServerModule.getD2Configuration(this), D2TestingConfig(
+        TestingD2Manager.blockingInstantiateD2(ServerTestingModule.getD2Configuration(this)!!, D2TestingConfig(
             DB_TO_IMPORT, USERNAME, AndroidSecureStore(this), AndroidInsecureStore(this)))
 
-        serverComponent = appComponent.plus(ServerModule())
+        serverComponent = appComponent.plus(ServerTestingModule())
 
         setUpUserComponent()
     }
