@@ -5,7 +5,7 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'io.fabric'
 apply plugin: 'hu.supercluster.paperwork'
-//apply from: 'buildscripts/jacoco.gradle'
+apply from: 'buildscripts/jacoco.gradle'
 
 def libraries = rootProject.ext.libraries
 def versions = rootProject.ext.versions
@@ -34,11 +34,11 @@ android {
         }
         animationsDisabled = true
 
-        /*unitTests.all {
+        unitTests.all {
             jacoco {
                 includeNoLocationClasses = true
             }
-        }*/
+        }
     }
 
     lintOptions {
