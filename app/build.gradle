@@ -5,6 +5,7 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'io.fabric'
 apply plugin: 'hu.supercluster.paperwork'
+apply from: 'buildscripts/jacoco.gradle'
 
 def libraries = rootProject.ext.libraries
 def versions = rootProject.ext.versions
@@ -32,6 +33,12 @@ android {
             returnDefaultValues = true
         }
         animationsDisabled = true
+
+        unitTests.all {
+            jacoco {
+                includeNoLocationClasses = true
+            }
+        }
     }
 
     lintOptions {
@@ -90,7 +97,7 @@ android {
 
             // jacoco test coverage reports both for
             // androidTest and test source sets
-            testCoverageEnabled = false
+            testCoverageEnabled = true
 
             // Disable fabric build ID generation for debug builds
 //          ext.enableCrashlytics = false
@@ -187,25 +194,25 @@ android {
     }
 }
 
-sonarqube {
-    properties {
-        property "sonar.projectKey", "dhis2_dhis2-android-capture-app"
-        property "sonar.organization", "dhis2"
-        property "sonar.host.url", "https://sonarcloud.io"
-
-        property "sonar.sources", "src/main/"
-        property "sonar.java.source", "7"
-        property "sonar.exclusions", "**/*Generated.java"
-
-
-//        property "sonar.projectVersion", "${version}"
-//        property "sonar.android.lint.report", "build/outputs/lint-results.xml"
-//        property "sonar.java.test.binaries", "${project.buildDir}/intermediates/classes/debug"
-//        property "sonar.java.test.binaries", "${project.buildDir}/intermediates/classes/debug"
-//        property "sonar.jacoco.reportPath",fileTree(dir: project.projectDir, includes: ['**/*.exec'])
-//        property "sonar.jacoco.itReportPath", instrumentationFileName
-    }
-}
+//sonarqube {
+//    properties {
+//        property "sonar.projectKey", "dhis2_dhis2-android-capture-app"
+//        property "sonar.organization", "dhis2"
+//        property "sonar.host.url", "https://sonarcloud.io"
+//
+//        property "sonar.sources", "src/main/"
+//        property "sonar.java.source", "7"
+//        property "sonar.java.binaries", "."
+//        property "sonar.exclusions", "**/*Generated.java"
+//
+////        property "sonar.projectVersion", "${version}"
+////        property "sonar.android.lint.report", "build/outputs/lint-results.xml"
+////        property "sonar.java.test.binaries", "${project.buildDir}/intermediates/classes/debug"
+////        property "sonar.java.test.binaries", "${project.buildDir}/intermediates/classes/debug"
+////        property "sonar.jacoco.reportPath",fileTree(dir: project.projectDir, includes: ['**/*.exec'])
+////        property "sonar.jacoco.itReportPath", instrumentationFileName
+//    }
+//}
 
 dependencies {
     debugImplementation project(':core')
