@@ -1,5 +1,4 @@
 package org.dhis2.usescases
-
 import android.content.Context
 import android.os.Build
 import androidx.test.espresso.IdlingRegistry

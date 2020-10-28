@@ -55,13 +55,6 @@ class SearchTeiRobot : BaseRobot() {
             )
     }
 
-    fun typeAttribute(searchWord: String, field: String) {
-        onView(withId(R.id.form_recycler))
-            .perform(
-                actionOnItem<SearchTEViewHolder>(hasDescendant(withText(field)), typeChildViewWithId(searchWord, R.id.input_editText))
-            )
-    }
-
     fun clickOnDateField() {
         onView(withId(R.id.form_recycler))
             .perform(
@@ -108,10 +101,6 @@ class SearchTeiRobot : BaseRobot() {
     fun selectAProgram(program: String) {
         onView(allOf(withId(R.id.spinner_text), withText(program)))
             .perform(click())
-    }
-
-    fun checkProgramHasChanged(program: String) {
-        onView(withId(R.id.spinner_text)).check(matches(withText(program)))
     }
 
     fun checkFieldsFromDisplayList(displayListFieldsUIModel: DisplayListFieldsUIModel) {
