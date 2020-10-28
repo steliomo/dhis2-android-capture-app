@@ -11,6 +11,8 @@ import org.dhis2.utils.analytics.AnalyticsModule
 import org.hisp.dhis.android.core.D2Manager
 import org.hisp.dhis.android.core.D2TestingConfig
 import org.hisp.dhis.android.core.TestingD2Manager
+import org.hisp.dhis.android.core.arch.storage.internal.AndroidInsecureStore
+import org.hisp.dhis.android.core.arch.storage.internal.AndroidSecureStore
 
 class AppTest : App() {
 
@@ -30,8 +32,8 @@ class AppTest : App() {
     override fun setUpServerComponent() {
     //    D2Manager.setTestingDatabase(DB_TO_IMPORT, USERNAME)
     //    D2Manager.blockingInstantiateD2(ServerModule.getD2Configuration(this))
-        TestingD2Manager.blockingInstantiateD2(ServerModule.getD2Configuration(this), D2TestingConfig(
-            DB_TO_IMPORT, USERNAME))
+        TestingD2Manager.instantiateD2(ServerModule.getD2Configuration(this), D2TestingConfig(
+            DB_TO_IMPORT, USERNAME, AndroidSecureStore(this), AndroidInsecureStore(this)))
 
         serverComponent = appComponent.plus(ServerModule())
 
