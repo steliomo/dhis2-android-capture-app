@@ -44,6 +44,7 @@ import org.dhis2.utils.customviews.CustomDialog;
 import org.dhis2.utils.customviews.ImageDetailBottomDialog;
 import org.dhis2.utils.filters.FilterManager;
 import org.dhis2.utils.filters.FiltersAdapter;
+import org.dhis2.utils.granularsync.SyncStatusDialog;
 import org.hisp.dhis.android.core.category.CategoryCombo;
 import org.hisp.dhis.android.core.category.CategoryOptionCombo;
 import org.hisp.dhis.android.core.enrollment.Enrollment;
@@ -96,6 +97,10 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
     @Inject
     FilterManager filterManager;
 
+    @Inject
+    FiltersAdapter filtersAdapter;
+
+
     private EventAdapter adapter;
     private CustomDialog dialog;
     private String lastModifiedEventUid;
@@ -108,7 +113,7 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
     private DashboardViewModel dashboardViewModel;
     private DashboardProgramModel dashboardModel;
     private TeiDashboardMobileActivity activity;
-    private FiltersAdapter filtersAdapter;
+    private PopupMenu popupMenu;
 
     public static TEIDataFragment newInstance(String programUid, String teiUid, String enrollmentUid) {
         TEIDataFragment fragment = new TEIDataFragment();
@@ -153,7 +158,6 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
         });
         activity.observeFilters().observe(this, showFilters -> showHideFilters(showFilters));
         activity.updatedEnrollment().observe(this, enrollmentUid -> updateEnrollment(enrollmentUid));
-        filtersAdapter = new FiltersAdapter(FiltersAdapter.ProgramType.TRACKER);
         if (presenter.hasAssignment()) {
             filtersAdapter.addAssignedToMe();
         }
@@ -278,6 +282,8 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
                 activity.getPresenter().init();
             }
             if (requestCode == FilterManager.OU_TREE) {
+                filtersAdapter.notifyDataSetChanged();
+                activity.presenter.setTotalFilters();
                 adapter.notifyDataSetChanged();
             }
         }
@@ -418,7 +424,9 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
             Bundle bundle = new Bundle();
             bundle.putString(PROGRAM_UID, dashboardModel.getCurrentEnrollment().program());
             bundle.putString(TRACKED_ENTITY_INSTANCE, dashboardModel.getTei().uid());
-            bundle.putString(ORG_UNIT, dashboardModel.getTei().organisationUnit()); //We take the OU of the TEI for the events
+            if(presenter.enrollmentOrgUnitInCaptureScope(dashboardModel.getCurrentOrgUnit().uid())) {
+                bundle.putString(ORG_UNIT, dashboardModel.getCurrentOrgUnit().uid());
+            }
             bundle.putString(ENROLLMENT_UID, dashboardModel.getCurrentEnrollment().uid());
             bundle.putString(EVENT_CREATION_TYPE, eventCreationType.name());
             bundle.putInt(EVENT_SCHEDULE_INTERVAL, scheduleIntervalDays);
@@ -497,9 +505,6 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
             binding.cardFront.teiImage.setVisibility(View.VISIBLE);
             Glide.with(this)
                     .load(new File(filePath))
-                    .placeholder(
-                            ObjectStyleUtils.getIconResource(context, defaultIcon, R.drawable.photo_temp_gray)
-                    )
                     .error(
                             ObjectStyleUtils.getIconResource(context, defaultIcon, R.drawable.photo_temp_gray)
                     )
@@ -520,8 +525,9 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
 
     @Override
     public void showNewEventOptions(View anchor, ProgramStage stage) {
-        PopupMenu popupMenu = new PopupMenu(context, anchor);
+        popupMenu = new PopupMenu(context, anchor);
         popupMenu.inflate(R.menu.dashboard_event_creation);
+
         popupMenu.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
                 case R.id.schedulenew:
@@ -540,21 +546,27 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
 
     }
 
+    @Override
+    public void hideDueDate() {
+        popupMenu.getMenu().findItem(R.id.schedulenew).setVisible(false);
+    }
+
     private void goToEventInitial(EventCreationType eventCreationType, ProgramStage programStage) {
         Intent intent = new Intent(activity, EventInitialActivity.class);
         Bundle bundle = new Bundle();
         bundle.putString(PROGRAM_UID, dashboardModel.getCurrentProgram().uid());
         bundle.putString(TRACKED_ENTITY_INSTANCE, dashboardModel.getTei().uid());
-        bundle.putString(ORG_UNIT, dashboardModel.getCurrentOrgUnit().uid());
+        if (presenter.enrollmentOrgUnitInCaptureScope(dashboardModel.getCurrentOrgUnit().uid())) {
+            bundle.putString(ORG_UNIT, dashboardModel.getCurrentOrgUnit().uid());
+        }
         bundle.putString(ENROLLMENT_UID, dashboardModel.getCurrentEnrollment().uid());
         bundle.putString(EVENT_CREATION_TYPE, eventCreationType.name());
         bundle.putBoolean(EVENT_REPEATABLE, programStage.repeatable());
         bundle.putSerializable(EVENT_PERIOD_TYPE, programStage.periodType());
         bundle.putString(Constants.PROGRAM_STAGE_UID, programStage.uid());
         bundle.putInt(EVENT_SCHEDULE_INTERVAL, programStage.standardInterval() != null ? programStage.standardInterval() : 0);
-        intent.addFlags(Intent.FLAG_ACTIVITY_FORWARD_RESULT);
         intent.putExtras(bundle);
-        activity.startActivity(intent);
+        startActivityForResult(intent, REQ_EVENT);
     }
 
     private void showHideFilters(boolean showFilters) {
@@ -589,5 +601,20 @@ public class TEIDataFragment extends FragmentGlobalAbstract implements TEIDataCo
             ouTreeIntent.putExtras(bundle);
         }
         this.startActivityForResult(ouTreeIntent, FilterManager.OU_TREE);
+    }
+
+    @Override
+    public void showSyncDialog(String uid) {
+        SyncStatusDialog dialog = new SyncStatusDialog.Builder()
+                .setConflictType(SyncStatusDialog.ConflictType.TEI)
+                .setUid(uid)
+                .onDismissListener(hasChanged -> {
+                    if (hasChanged)
+                        FilterManager.getInstance().publishData();
+
+                })
+                .build();
+
+        dialog.show(getChildFragmentManager(), uid);
     }
 }

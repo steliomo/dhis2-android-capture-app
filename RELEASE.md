@@ -1,4 +1,4 @@
-Android Capture App for DHIS 2 (v2.1.1) - Patch version
+Android Capture App for DHIS 2 (v2.3)
 
 <table>
 <tbody>
@@ -7,61 +7,86 @@ Android Capture App for DHIS 2 (v2.1.1) - Patch version
 <img src="https://s3-eu-west-1.amazonaws.com/content.dhis2.org/dhis2-android/android-chrome-384x384.png" width="800">
 </td>
 <td>The new <strong>DHIS2 Android App</strong> allows offline data capture across all DHIS2 data models. Data and metadata are automatically synchronized whenever there is internet access, always keeping the most relevant data for the logged user in the device.
-
-The app is compatible and we support <strong>2.34</strong>, <strong>2.33</strong>, <strong>2.32</strong>.  And has no breaking changes with <strong>2.31</strong>, <strong>2.30</strong> and <strong>2.29</strong>.
+The app is compatible and we support <strong>2.35</strong>, <strong>2.34</strong>, <strong>2.33</strong>.  And has no breaking changes with <strong>2.32</strong>, <strong>2.31</strong>, <strong>2.30</strong> and <strong>2.29</strong>.
 </td>
 </tr>
 <tr>
 <td colspan="2" bgcolor="white">
 
-## New features
-### Data sets
-#### Validation rules
-The validation step has been integrated in the save and complete flow.
-***
-### Listing, filtering and sorting of events
-#### Sorting events and TEIs
-The app now supports sorting of lists of events and TEIs. Sorting is integrated with the filters menu and the users will be allowed to sort the list by one chosen parameter either in ascending or descending order.
-#### Enrollment status filter
-In the Program Search screen, the user is able to filter the TEI list by Enrollment Status. This filter does not allow multiselection.
-#### Enrollment date filter
-In the Program Search screen, the user is able to filter the TEI list by Enrollment Date (in addition to event date, which was already available).
-***
-### Maps
-#### Satellite view
-The user will be able to change the map background to satellite view. Satellite view is available as an option in the map layer dialog. When selected, it will replace the default background image.
-#### Event layer in tracker programs
-When opening the map view in tracker programs, the program stages with coordinates will be available as layers.
-#### Display relationships in maps
-tracker programs, the Relationships between TEIs with coordinates will be available as layers.
-#### Carousel navigation in maps
-A carousel with TEIs, Events or Relationships cards has been added to the map view. The carrousel and the map will respond to the user selection in both directions.
-***
-### Generic features
-- Preselect previous organisation unit when entering events
-- Disable grammar spelling in option fields
-- Change color of long text fields in forms
-- Make category option searchable when there are more than 15 options
-***
-### Tracker features
-- Inherit values when creating new TEI for relationship
-***
-### User experience and user interface
-- Redesigned events and tei cards
-- Improve data set screen
-- Disable horizontal swipe in data sets
-- New icons for event status and sync state
-- Improved settings for sync parameters via the new Android Setting DHIS2 web app
-***
-### Quality, security and performance
-- Database encryption
-- Expanded error log
-- Home screen initialization
-***
-## Other additions
-In addition, the <strong>Android SDK</strong> has been updated to <strong>v1.2.0</strong>
-The <strong>rule engine</strong> has been updated to <strong>v2.0.6</strong>
-You can find in Jira details on the [new features](https://jira.dhis2.org/issues/?filter=11877) and [bugs fixed](https://jira.dhis2.org/issues/?filter=11878) in this version.
+## GENERIC FEATURES
+
+**Add option to clear URL in login screen:**  In the previous version the user could easily clear the username or password, but not the URL. A button to clear the text from the URL text box has been added to facilitate the login process.
+
+[Jira](https://jira.dhis2.org/browse/ANDROAPP-3315) | [Screenshot](https://s3-eu-west-1.amazonaws.com/content.dhis2.org/dhis2-android/release+notes+2.3/Log+In.png)
+
+**Improve error information to the user:**  In this version the app renders the name of the data elements or attributes which fail in the synchronization process and replace it in the error message by the name of the data element or the attribute. In addition, the app displays an error message also inside the data entry form, next to the affected field. This helps the user identify the source of error and fix the problem.
+
+[Jira ](https://jira.dhis2.org/browse/ANDROAPP-2778) | [Jira 2 ](https://jira.dhis2.org/browse/ANDROAPP-3272) |  [Screenshot](https://s3-eu-west-1.amazonaws.com/content.dhis2.org/dhis2-android/release+notes+2.3/Error+message.png)
+
+**Improve feedback when form rendering is slow:**  A loading bar has been added in the data entry forms when form or section are loading and when programs rules are executed
+
+[Jira ](https://jira.dhis2.org/browse/ANDROAPP-3026)
+
+
+
+**Open Image clicking on it:**  When the user taps on an image, the image is opened and displayed on the screen taking the whole screen.
+
+[Jira](https://jira.dhis2.org/browse/ANDROAPP-2834) | [Screenshot](https://s3-eu-west-1.amazonaws.com/content.dhis2.org/dhis2-android/release+notes+2.3/Picture+Display.png)
+
+
+
+## USER EXPERIENCE AND USER INTERFACE
+**New Event Cards in Event and Tracker programs:**  The event and TEI cards have been improved and made more intuitive and informative in the last version. We have harmonised our user interface and brought this design to the lists of events in event programs and in the TEI   dashboard. The cards display the name of the attribute or data element next to the value for the first three marked to be displayed. It is also possible to expand the card to display the rest of the attributes or data elements, which are shown following the same format.
+
+[Jira](https://jira.dhis2.org/browse/ANDROAPP-2766) | [Screenshot 1](https://s3-eu-west-1.amazonaws.com/content.dhis2.org/dhis2-android/release+notes+2.3/New+Event+Cards.png)
+
+**New Fields for Data Entry form:** All value types rendering has been redefined. The images are fully displayed now with an adjusted size, the icons on the left side have been removed and the clear buttons have been added to all value types as well.
+
+[Jira](https://jira.dhis2.org/browse/ANDROAPP-2917) | [Screenshot](https://s3-eu-west-1.amazonaws.com/content.dhis2.org/dhis2-android/release+notes+2.3/New+Entry+forms.png)
+
+
+## DATA ENTRY
+**Barcode/QR code to also accept keyboard data entry:** Barcode and QR code rendered fields will also accept manual data entry of the codified text.
+
+[Jira](https://jira.dhis2.org/browse/ANDROAPP-3086)
+
+**Non-editable fields have different display:** Fields where the value is auto-complete, either because it is auto-generated or assigned by a program rule, are rendered greyed out giving information to the user about the field not being editable.
+
+[Jira](https://jira.dhis2.org/browse/ANDROAPP-2848) | [Screenshot 1](https://s3-eu-west-1.amazonaws.com/content.dhis2.org/dhis2-android/release+notes+2.3/Non+Editable+fields.png)
+
+
+
+
+## QUALITY / SECURITY / PERFORMANCE
+
+[Functional Test][Event] Delete Event [Jira](https://jira.dhis2.org/browse/ANDROAPP-3200)
+
+[Functional Test][Event] Details Event [Jira](https://jira.dhis2.org/browse/ANDROAPP-3201)
+
+[Functional Test][Event] Share QR Event [Jira](https://jira.dhis2.org/browse/ANDROAPP-3202)
+
+[Functional Test][Sync] Datasets [Jira](https://jira.dhis2.org/browse/ANDROAPP-2995)
+
+[Functional Test][Sync] Event [Jira](https://jira.dhis2.org/browse/ANDROAPP-2997)
+
+[Functional Test][Sync] Tei [Jira](https://jira.dhis2.org/browse/ANDROAPP-2996)
+
+[Functional Test][Tei Dashboard] Enrollment [Jira](https://jira.dhis2.org/browse/ANDROAPP-3199)
+
+[Test] Flow ui test [Jira](https://jira.dhis2.org/browse/ANDROAPP-3321)
+
+[Performance][OrgUnitTree] Review list/adapter when loading org units [Jira](https://jira.dhis2.org/browse/ANDROAPP-2945)
+
+Disable ADB in production version [Jira ](https://jira.dhis2.org/browse/ANDROAPP-2998)
+
+Enable Acra in Prod and Debug [Jira](https://jira.dhis2.org/browse/ANDROAPP-3334)
+
+Track socketTimeOut in firebase and show message [Jira](https://jira.dhis2.org/browse/ANDROAPP-2868)
+
+Update crash activity texts [Jira](https://jira.dhis2.org/browse/ANDROAPP-3347)
+
+
+You can find in Jira details on the [new features](https://jira.dhis2.org/issues/?filter=11918) and [bugs fixed](https://jira.dhis2.org/issues/?filter=11919) in this version.
 
 Remember to check the [documentation](https://www.dhis2.org/android-documentation) for detailed information of the features included in the App and how to configure DHIS2 to use it.
 

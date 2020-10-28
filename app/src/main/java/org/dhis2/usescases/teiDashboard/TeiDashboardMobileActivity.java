@@ -43,6 +43,7 @@ import org.dhis2.utils.Constants;
 import org.dhis2.utils.HelpManager;
 import org.dhis2.utils.OrientationUtilsKt;
 import org.dhis2.utils.filters.FilterManager;
+import org.dhis2.utils.filters.Filters;
 import org.hisp.dhis.android.core.common.ObjectStyle;
 import org.hisp.dhis.android.core.enrollment.EnrollmentStatus;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +67,6 @@ import static org.dhis2.utils.analytics.AnalyticsConstants.SHOW_HELP;
 
 public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implements TeiDashboardContracts.View {
 
-    public static final String UNSELECTED_TAB_COLOR = "#B3FFFFFF";
     public static final int OVERVIEW_POS = 0;
     public static final int INDICATORS_POS = 1;
     public static final int RELATIONSHIPS_POS = 2;
@@ -139,6 +139,7 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
         binding = DataBindingUtil.setContentView(this, R.layout.activity_dashboard_mobile);
         binding.setPresenter(presenter);
 
+        filterManager.setUnsupportedFilters(Filters.ENROLLMENT_DATE, Filters.ENROLLMENT_STATUS);
         binding.setTotalFilters(filterManager.getTotalFilters());
         binding.tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
         binding.tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
@@ -157,7 +158,7 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
                 if (tab.getPosition() == getLastTabPosition()) {
                     BadgeDrawable badge = tab.getOrCreateBadge();
                     if (badge.hasNumber() && badge.getNumber() > 0) {
-                        badge.setBackgroundColor(Color.parseColor(UNSELECTED_TAB_COLOR));
+                        badge.setBackgroundColor(ContextCompat.getColor(TeiDashboardMobileActivity.this, R.color.unselected_tab_badge_color));
                     }
                 }
             }
@@ -187,7 +188,7 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
                         binding.relationshipMapIcon.setImageResource(R.drawable.ic_map);
                     }
                     boolean showMap = !relationshipMap.getValue();
-                    if(showMap){
+                    if (showMap) {
                         binding.toolbarProgress.setVisibility(View.VISIBLE);
                         binding.toolbarProgress.hide();
                     }
@@ -281,22 +282,25 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
                     new ViewPager2.OnPageChangeCallback() {
                         @Override
                         public void onPageSelected(int position) {
+                            String pageTitle;
                             switch (position) {
                                 case INDICATORS_LANDSCAPE_POS:
-                                    binding.sectionTitle.setText(getString(R.string.dashboard_indicators));
+                                    pageTitle = getString(R.string.dashboard_indicators);
                                     binding.relationshipMapIcon.setVisibility(View.GONE);
                                     break;
                                 case RELATIONSHIPS_LANDSCAPE_POS:
-                                    binding.sectionTitle.setText(getString(R.string.dashboard_relationships));
+                                    pageTitle = getString(R.string.dashboard_relationships);
                                     binding.relationshipMapIcon.setVisibility(View.VISIBLE);
                                     break;
                                 case NOTES_LANDSCAPE_POS:
-                                    binding.sectionTitle.setText(getString(R.string.dashboard_notes));
+                                    pageTitle = getString(R.string.dashboard_notes);
                                     binding.relationshipMapIcon.setVisibility(View.GONE);
                                     break;
                                 default:
+                                    pageTitle = null;
                                     break;
                             }
+                            binding.sectionTitle.post(()-> binding.sectionTitle.setText(pageTitle));
                         }
                     }
             );
@@ -663,7 +667,11 @@ public class TeiDashboardMobileActivity extends ActivityGlobalAbstract implement
         if (binding.tabLayout.getTabCount() > 0) {
             BadgeDrawable badge = binding.tabLayout.getTabAt(getLastTabPosition()).getOrCreateBadge();
             badge.setVisible(numberOfNotes > 0);
-            badge.setBackgroundColor(Color.WHITE);
+            if (OrientationUtilsKt.isPortrait() && binding.teiPager.getCurrentItem() == 3) {
+                badge.setBackgroundColor(Color.WHITE);
+            } else {
+                badge.setBackgroundColor(ContextCompat.getColor(this, R.color.unselected_tab_badge_color));
+            }
             badge.setBadgeTextColor(ColorUtils.getPrimaryColor(getContext(), ColorUtils.ColorType.PRIMARY));
             badge.setNumber(numberOfNotes);
             badge.setMaxCharacterCount(3);

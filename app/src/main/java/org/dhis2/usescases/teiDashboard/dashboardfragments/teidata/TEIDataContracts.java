@@ -33,6 +33,8 @@ public class TEIDataContracts {
 
     public interface View extends AbstractActivityContracts.View {
 
+        void hideDueDate();
+
         Consumer<List<EventViewModel>> setEvents();
 
         Consumer<ProgramStage> displayGenerateEvent();
@@ -74,6 +76,8 @@ public class TEIDataContracts {
         void openOrgUnitTreeSelector(String programUid);
 
         void setEnrollment(Enrollment enrollment);
+
+        void showSyncDialog(String uid);
     }
 
     public interface Presenter extends AbstractActivityContracts.Presenter {
@@ -115,6 +119,10 @@ public class TEIDataContracts {
         void getEnrollment(String enrollmentUid);
 
         boolean hasAssignment();
+
+        void onSyncDialogClick(String eventUid);
+
+        boolean enrollmentOrgUnitInCaptureScope(String enrollmentOrgUnit);
     }
 
 }

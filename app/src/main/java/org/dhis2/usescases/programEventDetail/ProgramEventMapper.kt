@@ -3,8 +3,9 @@ package org.dhis2.usescases.programEventDetail
 import java.util.Date
 import javax.inject.Inject
 import org.dhis2.Bindings.userFriendlyValue
-import org.dhis2.data.dhislogic.DhisEventUtils
 import org.dhis2.data.tuples.Pair
+import org.dhis2.usescases.teiDashboard.dashboardfragments.teidata.teievents.EventViewModel
+import org.dhis2.usescases.teiDashboard.dashboardfragments.teidata.teievents.EventViewModelType
 import org.dhis2.utils.DateUtils
 import org.hisp.dhis.android.core.D2
 import org.hisp.dhis.android.core.arch.helpers.UidsHelper
@@ -14,7 +15,25 @@ import org.hisp.dhis.android.core.dataelement.DataElement
 import org.hisp.dhis.android.core.event.Event
 import org.hisp.dhis.android.core.trackedentity.TrackedEntityDataValue
 
-class ProgramEventMapper @Inject constructor(val d2: D2, val dhisEventUtils: DhisEventUtils) {
+class ProgramEventMapper @Inject constructor(val d2: D2) {
+
+    fun eventToEventViewModel(event: Event): EventViewModel {
+        return EventViewModel(
+            EventViewModelType.EVENT,
+            d2.programModule().programStages().uid(event.programStage()).blockingGet(),
+            event,
+            0,
+            event.lastUpdated(),
+            isSelected = false,
+            canAddNewEvent = true,
+            orgUnitName = d2.organisationUnitModule().organisationUnits()
+                .uid(event.organisationUnit())
+                .blockingGet().displayName() ?: "-",
+            catComboName = getCatComboName(event.attributeOptionCombo()),
+            dataElementValues = getEventValues(event.uid(), event.programStage()!!),
+            groupedByStage = true
+        )
+    }
 
     fun eventToProgramEvent(event: Event): ProgramEventViewModel {
         val orgUnitName: String = getOrgUnitName(event.organisationUnit()) ?: ""
@@ -54,7 +73,7 @@ class ProgramEventMapper @Inject constructor(val d2: D2, val dhisEventUtils: Dhi
             hasExpired || !inOrgUnitRange,
             attrOptCombo,
             event.geometry(),
-            dhisEventUtils.isEventEditable(event.uid())
+            d2.eventModule().eventService().blockingIsEditable(event.uid())
         )
     }
 
@@ -161,4 +180,41 @@ class ProgramEventMapper @Inject constructor(val d2: D2, val dhisEventUtils: Dhi
 
     private fun getCategoryOptionCombo(attributeOptionCombo: String?) =
         d2.categoryModule().categoryOptionCombos().uid(attributeOptionCombo).blockingGet()
+
+    private fun getEventValues(
+        eventUid: String,
+        stageUid: String
+    ): List<kotlin.Pair<String, String?>> {
+        val displayInListDataElements = d2.programModule().programStageDataElements()
+            .byProgramStage().eq(stageUid)
+            .byDisplayInReports().isTrue
+            .blockingGet().map {
+                it.dataElement()?.uid()!!
+            }
+        return if (displayInListDataElements.isNotEmpty()) {
+            displayInListDataElements.map {
+                val valueRepo = d2.trackedEntityModule().trackedEntityDataValues()
+                    .value(eventUid, it)
+                val de = d2.dataElementModule().dataElements()
+                    .uid(it).blockingGet()
+                Pair(
+                    de.displayFormName() ?: de.displayName() ?: "",
+                    if (valueRepo.blockingExists()) {
+                        valueRepo.blockingGet().userFriendlyValue(d2)
+                    } else {
+                        "-"
+                    }
+                )
+            }
+        } else {
+            emptyList()
+        }
+    }
+
+    private fun getCatComboName(categoryOptionComboUid: String?): String? {
+        return categoryOptionComboUid?.let {
+            d2.categoryModule().categoryOptionCombos().uid(categoryOptionComboUid).blockingGet()
+                .displayName()
+        }
+    }
 }

@@ -1,17 +1,13 @@
 package org.dhis2.usescases.eventsWithoutRegistration.eventCapture;
 
 import androidx.annotation.NonNull;
-import androidx.databinding.ObservableField;
 
 import org.dhis2.data.forms.FormSectionViewModel;
-import org.dhis2.data.forms.dataentry.DataEntryStore;
 import org.dhis2.data.forms.dataentry.fields.FieldViewModel;
-import org.dhis2.data.tuples.Pair;
 import org.dhis2.usescases.general.AbstractActivityContracts;
 import org.dhis2.utils.Result;
-import org.dhis2.utils.RulesActionCallbacks;
 import org.hisp.dhis.android.core.event.EventStatus;
-import org.hisp.dhis.android.core.organisationunit.OrganisationUnitLevel;
+import org.hisp.dhis.android.core.organisationunit.OrganisationUnit;
 import org.hisp.dhis.rules.models.RuleEffect;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,9 +18,6 @@ import java.util.Map;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.SingleSource;
-import io.reactivex.functions.Consumer;
-import io.reactivex.processors.FlowableProcessor;
 import io.reactivex.subjects.BehaviorSubject;
 
 /**
@@ -67,6 +60,10 @@ public class EventCaptureContract {
         void showLoopWarning();
 
         void goBack();
+
+        void showProgress();
+
+        void hideProgress();
     }
 
     public interface Presenter extends AbstractActivityContracts.Presenter {
@@ -112,6 +109,10 @@ public class EventCaptureContract {
         void refreshTabCounters();
 
         void setLastUpdatedUid(@NotNull String lastUpdatedUid);
+
+        void hideProgress();
+
+        void showProgress();
     }
 
     public interface EventCaptureRepository {
@@ -122,7 +123,7 @@ public class EventCaptureContract {
 
         Flowable<String> eventDate();
 
-        Flowable<String> orgUnit();
+        Flowable<OrganisationUnit> orgUnit();
 
         Flowable<String> catOption();
 

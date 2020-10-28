@@ -13,6 +13,7 @@ import androidx.lifecycle.MutableLiveData;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.dhis2.Bindings.ValueExtensionsKt;
 import org.dhis2.R;
 import org.dhis2.data.forms.dataentry.fields.FieldViewModel;
 import org.dhis2.data.forms.dataentry.fields.FormViewHolder;
@@ -22,6 +23,7 @@ import org.dhis2.utils.Constants;
 import org.dhis2.utils.Preconditions;
 import org.dhis2.utils.ValidationUtils;
 import org.dhis2.utils.customviews.TextInputAutoCompleteTextView;
+import org.hisp.dhis.android.core.common.ValueType;
 import org.hisp.dhis.android.core.common.ValueTypeDeviceRendering;
 import org.hisp.dhis.android.core.common.ValueTypeRenderingType;
 
@@ -64,11 +66,14 @@ public class EditTextCustomHolder extends FormViewHolder {
             validateRegex();
         });
         binding.customEdittext.setOnEditorActionListener((v, actionId, event) -> {
-            selectedFieldUid = null;
-            binding.customEdittext.getEditText().clearFocus();
-            sendAction();
-            closeKeyboard(binding.customEdittext.getEditText());
-            return true;
+            if(editTextModel.valueType() != ValueType.LONG_TEXT) {
+                selectedFieldUid = null;
+                binding.customEdittext.getEditText().clearFocus();
+                closeKeyboard(binding.customEdittext.getEditText());
+                return true;
+            }else{
+                return false;
+            }
         });
 
         binding.customEdittext.setActivationListener(() -> {
@@ -113,7 +118,7 @@ public class EditTextCustomHolder extends FormViewHolder {
         descriptionText = model.description();
         binding.customEdittext.setDescription(descriptionText);
 
-        binding.customEdittext.setText(editTextModel.value());
+        binding.customEdittext.setText(ValueExtensionsKt.withValueTypeCheck(editTextModel.value(), editTextModel.valueType()));
 
         binding.customEdittext.setWarning(model.warning(), model.error());
 

@@ -85,8 +85,6 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true);
     }
 
-    protected boolean wantToImportDB = false;
-
     @NonNull
     @Singleton
     AppComponent appComponent;
@@ -132,12 +130,9 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
             upgradeSecurityProviderSync();
 
         setUpAppComponent();
-        if (wantToImportDB) {
-            populateDBIfNeeded();
-        }
         setUpServerComponent();
         setUpRxPlugin();
-//        initAcra();
+        initAcra();
         initCustomCrashActivity();
         TrackHelper.track().download().identifier(new DownloadTracker.Extra.ApkChecksum(this)).with(getTracker());
     }
@@ -147,17 +142,12 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
                 .errorDrawable(R.drawable.ic_dhis)
                 .apply();
     }
-    
+
     public synchronized Tracker getTracker() {
-        if (matomoTracker == null){
+        if (matomoTracker == null) {
             matomoTracker = TrackerBuilder.createDefault(BuildConfig.MATOMO_URL, BuildConfig.MATOMO_ID).build(Matomo.getInstance(this));
         }
         return matomoTracker;
-    }
-
-    private void populateDBIfNeeded() {
-        DBTestLoader dbTestLoader = new DBTestLoader(getApplicationContext());
-        dbTestLoader.copyDatabaseFromAssetsIfNeeded();
     }
 
     private void upgradeSecurityProviderSync() {
@@ -309,7 +299,6 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
         userComponent = null;
     }
 
-
     ////////////////////////////////////////////////////////////////////////
     // Dashboard component
     ////////////////////////////////////////////////////////////////////////
@@ -355,6 +344,10 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
         fromBackGround = true;
     }
 
+    public void disableBackGroundFlag() {
+        fromBackGround = false;
+    }
+
     public boolean isSessionBlocked() {
         boolean shouldShowPinDialog = fromBackGround && appComponent().preferenceProvider().getBoolean(Preference.SESSION_LOCKED, false);
         fromBackGround = false;
@@ -374,12 +367,12 @@ public class App extends MultiDexApplication implements Components, LifecycleObs
             if ((e instanceof NullPointerException) || (e instanceof IllegalArgumentException)) {
                 Timber.d("Error in app");
                 Thread.currentThread().getUncaughtExceptionHandler()
-                        .uncaughtException(Thread.currentThread(),e);
+                        .uncaughtException(Thread.currentThread(), e);
             }
             if (e instanceof IllegalStateException) {
                 Timber.d("Error in RxJava");
                 Thread.currentThread().getUncaughtExceptionHandler()
-                        .uncaughtException(Thread.currentThread(),e);
+                        .uncaughtException(Thread.currentThread(), e);
             }
             Timber.d(e);
         });

@@ -14,6 +14,8 @@ import androidx.databinding.DataBindingUtil;
 import androidx.recyclerview.widget.DividerItemDecoration;
 
 import org.dhis2.App;
+import org.dhis2.Bindings.ExtensionsKt;
+import org.dhis2.Bindings.ViewExtensionsKt;
 import org.dhis2.R;
 import org.dhis2.data.tuples.Pair;
 import org.dhis2.databinding.ActivityDatasetDetailBinding;
@@ -37,6 +39,8 @@ import javax.inject.Inject;
 
 public class DataSetDetailActivity extends ActivityGlobalAbstract implements DataSetDetailView {
 
+    private static String FRAGMENT_TAG = "SYNC";
+
     private ActivityDatasetDetailBinding binding;
     private String dataSetUid;
     private Boolean accessWriteData;
@@ -47,8 +51,10 @@ public class DataSetDetailActivity extends ActivityGlobalAbstract implements Dat
     @Inject
     FilterManager filterManager;
 
+    @Inject
+    FiltersAdapter filtersAdapter;
+
     DataSetDetailAdapter adapter;
-    private FiltersAdapter filtersAdapter;
     private boolean backDropActive;
 
     @Override
@@ -64,8 +70,7 @@ public class DataSetDetailActivity extends ActivityGlobalAbstract implements Dat
 
         adapter = new DataSetDetailAdapter(presenter);
 
-        filtersAdapter = new FiltersAdapter(FiltersAdapter.ProgramType.DATASET);
-
+        ViewExtensionsKt.clipWithRoundedCorners(binding.recycler, ExtensionsKt.getDp(16));
         binding.filterLayout.setAdapter(filtersAdapter);
     }
 
@@ -209,7 +214,7 @@ public class DataSetDetailActivity extends ActivityGlobalAbstract implements Dat
                     }
                 }).build();
 
-        dialog.show(getSupportFragmentManager(), dialog.getDialogTag());
+        dialog.show(getSupportFragmentManager(), FRAGMENT_TAG);
     }
 
     @Override

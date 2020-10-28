@@ -11,6 +11,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.CircleCrop
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
@@ -25,6 +26,7 @@ import org.dhis2.Bindings.isKeyboardOpened
 import org.dhis2.R
 import org.dhis2.data.forms.dataentry.DataEntryAdapter
 import org.dhis2.data.forms.dataentry.DataEntryArguments
+import org.dhis2.data.forms.dataentry.DataEntryHeaderHelper
 import org.dhis2.data.forms.dataentry.fields.FieldViewModel
 import org.dhis2.data.forms.dataentry.fields.RowAction
 import org.dhis2.data.forms.dataentry.fields.display.DisplayViewModel
@@ -43,9 +45,9 @@ import org.dhis2.utils.Constants.RQ_QR_SCANNER
 import org.dhis2.utils.Constants.TEI_UID
 import org.dhis2.utils.EventMode
 import org.dhis2.utils.FileResourcesUtil
+import org.dhis2.utils.ImageUtils
 import org.dhis2.utils.customviews.AlertBottomDialog
 import org.dhis2.utils.customviews.ImageDetailBottomDialog
-import org.dhis2.utils.recyclers.StickyHeaderItemDecoration
 import org.hisp.dhis.android.core.arch.helpers.FileResourceDirectoryHelper
 import org.hisp.dhis.android.core.arch.helpers.GeometryHelper
 import org.hisp.dhis.android.core.common.FeatureType
@@ -94,6 +96,7 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
     }
 
     private lateinit var adapter: DataEntryAdapter
+    private lateinit var dataEntryHeaderHelper: DataEntryHeaderHelper
 
     /*region LIFECYCLE*/
 
@@ -107,6 +110,13 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
                 EnrollmentMode.valueOf(intent.getStringExtra(MODE_EXTRA))
             )
         ).inject(this)
+
+        if (presenter.getEnrollment() == null ||
+            presenter.getEnrollment()?.trackedEntityInstance() == null
+        ) {
+            finish()
+        }
+
         forRelationship = intent.getBooleanExtra(FOR_RELATIONSHIP, false)
         binding = DataBindingUtil.setContentView(this, R.layout.enrollment_activity)
         binding.view = this
@@ -118,16 +128,20 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
             supportFragmentManager,
             DataEntryArguments.forEnrollment(intent.getStringExtra(ENROLLMENT_UID_EXTRA))
         )
-        binding.fieldRecycler.addItemDecoration(
-            StickyHeaderItemDecoration(
-                binding.fieldRecycler,
-                false
-            ) { itemPosition ->
-                itemPosition >= 0 &&
-                    itemPosition < adapter.itemCount &&
-                    adapter.getItemViewType(itemPosition) == adapter.sectionViewType()
-            }
+        dataEntryHeaderHelper = DataEntryHeaderHelper(
+            binding.headerContainer, binding.fieldRecycler
         )
+        dataEntryHeaderHelper.observeHeaderChanges(this)
+        binding.fieldRecycler.addOnScrollListener(object :
+                RecyclerView.OnScrollListener() {
+                override fun onScrolled(
+                    recyclerView: RecyclerView,
+                    dx: Int,
+                    dy: Int
+                ) {
+                    dataEntryHeaderHelper.checkSectionHeader(recyclerView)
+                }
+            })
         binding.fieldRecycler.adapter = adapter
 
         binding.save.setOnClickListener {
@@ -174,10 +188,13 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
                     }
                 }
                 CAMERA_REQUEST -> {
-                    val file = File(
+                    val imageFile = File(
                         FileResourceDirectoryHelper.getFileResourceDirectory(this),
                         "tempFile.png"
                     )
+
+                    val file = ImageUtils().rotateImage(this, imageFile)
+
                     try {
                         presenter.saveFile(uuid, if (file.exists()) file.path else null)
                         presenter.updateFields()
@@ -191,7 +208,7 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
                 RQ_QR_SCANNER -> {
                     scanTextView.updateScanResult(data!!.getStringExtra(Constants.EXTRA_DATA))
                 }
-                RQ_EVENT -> openDashboard(presenter.getEnrollment().uid()!!)
+                RQ_EVENT -> openDashboard(presenter.getEnrollment()!!.uid()!!)
             }
         }
         super.onActivityResult(requestCode, resultCode, data)
@@ -211,13 +228,13 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
                 presenter.getProgram().uid(),
                 eventUid,
                 null,
-                presenter.getEnrollment().trackedEntityInstance(),
+                presenter.getEnrollment()!!.trackedEntityInstance(),
                 null,
-                presenter.getEnrollment().organisationUnit(),
+                presenter.getEnrollment()!!.organisationUnit(),
                 null,
-                presenter.getEnrollment().uid(),
+                presenter.getEnrollment()!!.uid(),
                 0,
-                presenter.getEnrollment().status()
+                presenter.getEnrollment()!!.status()
             )
             val eventInitialIntent = Intent(abstracContext, EventInitialActivity::class.java)
             eventInitialIntent.putExtras(bundle)
@@ -233,7 +250,7 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
             )
             eventCreationIntent.putExtra(
                 Constants.TRACKED_ENTITY_INSTANCE,
-                presenter.getEnrollment().trackedEntityInstance()
+                presenter.getEnrollment()!!.trackedEntityInstance()
             )
             startActivityForResult(eventCreationIntent, RQ_EVENT)
         }
@@ -242,13 +259,13 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
     override fun openDashboard(enrollmentUid: String) {
         if (forRelationship) {
             val intent = Intent()
-            intent.putExtra("TEI_A_UID", presenter.getEnrollment().trackedEntityInstance())
+            intent.putExtra("TEI_A_UID", presenter.getEnrollment()!!.trackedEntityInstance())
             setResult(Activity.RESULT_OK, intent)
             finish()
         } else {
             val bundle = Bundle()
             bundle.putString(PROGRAM_UID, presenter.getProgram().uid())
-            bundle.putString(TEI_UID, presenter.getEnrollment().trackedEntityInstance())
+            bundle.putString(TEI_UID, presenter.getEnrollment()!!.trackedEntityInstance())
             bundle.putString(ENROLLMENT_UID, enrollmentUid)
             startActivity(TeiDashboardMobileActivity::class.java, bundle, true, false, null)
         }
@@ -379,13 +396,7 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
                     .transform(CircleCrop())
                     .into(binding.teiDataHeader.teiImage)
                 binding.teiDataHeader.teiImage.setOnClickListener {
-                    ImageDetailBottomDialog(
-                        null,
-                        File(profileImage)
-                    ).show(
-                        supportFragmentManager,
-                        ImageDetailBottomDialog.TAG
-                    )
+                    presenter.onTeiImageHeaderClick()
                 }
             }
         } else {
@@ -394,6 +405,16 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
             binding.title.text =
                 String.format(getString(R.string.enroll_in), presenter.getProgram().displayName())
         }
+    }
+
+    override fun displayTeiPicture(picturePath: String) {
+        ImageDetailBottomDialog(
+            null,
+            File(picturePath)
+        ).show(
+            supportFragmentManager,
+            ImageDetailBottomDialog.TAG
+        )
     }
     /*endregion*/
     /*region ACCESS*/
@@ -437,7 +458,9 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
             offset = it.top
         }
 
-        adapter.swap(fields) { }
+        adapter.swap(fields) {
+            dataEntryHeaderHelper.onItemsUpdatedCallback()
+        }
         myLayoutManager.scrollToPositionWithOffset(myFirstPositionIndex, offset)
     }
 
@@ -457,6 +480,18 @@ class EnrollmentActivity : ActivityGlobalAbstract(), EnrollmentView {
     override fun performSaveClick() {
         if (presenter.dataIntegrityCheck()) {
             presenter.finish(mode)
+        }
+    }
+
+    override fun showProgress() {
+        runOnUiThread {
+            binding.toolbarProgress.show()
+        }
+    }
+
+    override fun hideProgress() {
+        runOnUiThread {
+            binding.toolbarProgress.hide()
         }
     }
 }

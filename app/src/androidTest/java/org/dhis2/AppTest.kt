@@ -1,5 +1,6 @@
 package org.dhis2
 
+import org.dhis2.common.di.TestingInjector
 import org.dhis2.common.preferences.PreferencesTestingModule
 import org.dhis2.data.schedulers.SchedulerModule
 import org.dhis2.data.schedulers.SchedulersProviderImpl
@@ -13,13 +14,19 @@ class AppTest : App() {
 
     @Override
     override fun onCreate() {
-        wantToImportDB = true
+        populateDBIfNeeded()
         super.onCreate()
+    }
+
+    private fun populateDBIfNeeded() {
+        TestingInjector.provideDBImporter(applicationContext).apply {
+            copyDatabaseFromAssetsIfNeeded()
+        }
     }
 
     @Override
     override fun setUpServerComponent() {
-        D2Manager.setTestingDatabase(DB_TO_IMPORT, "android")
+        D2Manager.setTestingDatabase(DB_TO_IMPORT, USERNAME)
         D2Manager.blockingInstantiateD2(ServerModule.getD2Configuration(this))
 
         serverComponent = appComponent.plus(ServerModule())
@@ -52,5 +59,6 @@ class AppTest : App() {
 
     companion object {
         const val DB_TO_IMPORT = "127-0-0-1-8080_android_unencrypted.db"
+        const val USERNAME = "android"
     }
 }

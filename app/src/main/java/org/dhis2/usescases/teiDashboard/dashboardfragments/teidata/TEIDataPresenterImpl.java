@@ -34,6 +34,7 @@ import org.hisp.dhis.android.core.D2;
 import org.hisp.dhis.android.core.enrollment.Enrollment;
 import org.hisp.dhis.android.core.event.Event;
 import org.hisp.dhis.android.core.event.EventStatus;
+import org.hisp.dhis.android.core.organisationunit.OrganisationUnit;
 import org.hisp.dhis.android.core.program.Program;
 import org.hisp.dhis.android.core.program.ProgramStage;
 import org.hisp.dhis.rules.models.RuleActionHideProgramStage;
@@ -62,7 +63,7 @@ import static org.dhis2.utils.analytics.AnalyticsConstants.TYPE_SHARE;
 /**
  * QUADRAM. Created by ppajuelo on 09/04/2019.
  */
-class TEIDataPresenterImpl implements TEIDataContracts.Presenter {
+public class TEIDataPresenterImpl implements TEIDataContracts.Presenter {
 
     private final D2 d2;
     private final DashboardRepository dashboardRepository;
@@ -433,6 +434,9 @@ class TEIDataPresenterImpl implements TEIDataContracts.Presenter {
     @Override
     public void onAddNewEvent(@NonNull View anchor, @NonNull ProgramStage stage) {
         view.showNewEventOptions(anchor, stage);
+        if (stage.hideDueDate() != null && stage.hideDueDate()) {
+            view.hideDueDate();
+        }
     }
 
     @Override
@@ -467,5 +471,18 @@ class TEIDataPresenterImpl implements TEIDataContracts.Presenter {
                 Preference.GROUPING,
                 typeToken,
                 new HashMap<>());
+    }
+
+    @Override
+    public void onSyncDialogClick(String eventUid) {
+        view.showSyncDialog(teiUid);
+    }
+
+    @Override
+    public boolean enrollmentOrgUnitInCaptureScope(String enrollmentOrgUnit) {
+        return  !d2.organisationUnitModule().organisationUnits()
+                .byOrganisationUnitScope(OrganisationUnit.Scope.SCOPE_DATA_CAPTURE)
+                .byUid().eq(enrollmentOrgUnit)
+                .blockingIsEmpty();
     }
 }
