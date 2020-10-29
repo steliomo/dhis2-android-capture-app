@@ -136,8 +136,9 @@ public class SmsSendingService extends Service {
 
     private Single<Integer> chooseConvertTask() {
         switch (inputArguments.getSubmissionType()) {
+
             /*case ENROLLMENT:
-                return smsSender.convertEnrollment(inputArguments.getEnrollmentId());*/
+                return smsSender.convertEnrollment(inputArguments.getEnrollmentId());
             case TRACKER_EVENT:
                 return smsSender.convertTrackerEvent(inputArguments.getTrackerEventId());
             case SIMPLE_EVENT:
@@ -153,7 +154,7 @@ public class SmsSendingService extends Service {
                         inputArguments.getPeriod(),
                         inputArguments.getAttributeOptionCombo());
             case WRONG_PARAMS:
-                reportState(State.ITEM_NOT_READY, 0, 0);
+                reportState(State.ITEM_NOT_READY, 0, 0);*/
         }
         return null;
     }
