@@ -187,12 +187,6 @@ android {
     }
 }
 
-sonarqube {
-    properties {
-        property "sonar.language", "java"
-    }
-}
-
 dependencies {
     debugImplementation project(':core')
 
