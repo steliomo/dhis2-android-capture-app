@@ -193,47 +193,9 @@ class GranularSyncPresenterImpl(
         statesList = ArrayList()
         states = MutableLiveData()
 
-        if (conflictType == TEI) {
-            val enrollmentUids = UidsHelper.getUidsList(
-                d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(recordUid)
-                    .byState().`in`(
-                        State.TO_POST,
-                        State.TO_UPDATE,
-                        State.UPLOADING
-                    ).blockingGet()
-            )
-            val stringConvert = if (enrollmentUids.isNotEmpty()) {
-                smsSender.convertEnrollment(enrollmentUids[0])
-            } else if (
-                !d2.enrollmentModule().enrollments()
-                    .byTrackedEntityInstance().eq(recordUid).blockingIsEmpty()
-            ) {
-                smsSender.convertEnrollment(
-                    d2.enrollmentModule().enrollments()
-                        .byTrackedEntityInstance().eq(recordUid)
-                        .one().blockingGet().uid()
-                )
-            } else {
-                Single.error(Exception(view.emptyEnrollmentError()))
-            }
-
-            disposable.add(
-                stringConvert
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(Schedulers.io())
-                    .subscribe(
-                        { message ->
-                            val number =
-                                d2.smsModule().configCase().smsModuleConfig.blockingGet().gateway
-                            view.sendSMS(message, number)
-                        },
-                        { this.reportError(it) }
-                    )
-            )
-        } else {
-            val convertTask = when (conflictType) {
-                EVENT -> smsSender.convertSimpleEvent(recordUid)
-                /*TEI -> {
+        val convertTask = when (conflictType) {
+            EVENT -> smsSender.convertSimpleEvent(recordUid)
+            TEI -> {
                 // TODO: GET ALL ENROLLMENTS FROM TEI
                 val enrollmentUids = UidsHelper.getUidsList(
                     d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(recordUid)
@@ -245,9 +207,9 @@ class GranularSyncPresenterImpl(
                 )
                 if (enrollmentUids.isNotEmpty()) {
                     smsSender.convertEnrollment(enrollmentUids[0])
-                } else if (!d2.enrollmentModule().enrollments().byTrackedEntityInstance().eq(
-                    recordUid
-                ).blockingIsEmpty()
+                } else if (
+                    !d2.enrollmentModule().enrollments()
+                        .byTrackedEntityInstance().eq(recordUid).blockingIsEmpty()
                 ) {
                     smsSender.convertEnrollment(
                         d2.enrollmentModule().enrollments()
@@ -257,33 +219,30 @@ class GranularSyncPresenterImpl(
                 } else {
                     Single.error(Exception(view.emptyEnrollmentError()))
                 }
-            }*/
-                DATA_VALUES -> smsSender.convertDataSet(
-                    recordUid,
-                    dvOrgUnit,
-                    dvPeriodId,
-                    dvAttrCombo
-                )
-                else -> Single.error(Exception(view.unsupportedTask()))
             }
-
-            disposable.add(
-                convertTask
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(Schedulers.io())
-                    .subscribe(
-                        { count ->
-                            reportState(SmsSendingService.State.CONVERTED, 0, count!!)
-                            reportState(
-                                SmsSendingService.State.WAITING_COUNT_CONFIRMATION,
-                                0,
-                                count
-                            )
-                        },
-                        { this.reportError(it) }
-                    )
+            DATA_VALUES -> smsSender.convertDataSet(
+                recordUid,
+                dvOrgUnit,
+                dvPeriodId,
+                dvAttrCombo
             )
+            else -> Single.error(Exception(view.unsupportedTask()))
         }
+
+        disposable.add(
+            convertTask
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .subscribe(
+                    { message ->
+                        val number =
+                            d2.smsModule().configCase().smsModuleConfig.blockingGet().gateway
+                        view.sendSMS(message, number)
+                        reportState(SmsSendingService.State.WAITING_RESULT, 1, 1)
+                    },
+                    { this.reportError(it) }
+                )
+        )
 
         return states
     }
