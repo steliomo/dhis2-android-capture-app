@@ -27,7 +27,7 @@ import org.hisp.dhis.android.core.TestingD2Manager
 import java.util.ArrayList
 
 @Module
-class ServerTestingModule() : ServerModule(){
+class ServerTestingModule : ServerModule(){
 
     @Provides
     @PerServer
@@ -47,7 +47,7 @@ class ServerTestingModule() : ServerModule(){
         return DataBaseExporterImpl(d2)
     }
 
-    companion object{
+    companion object {
         fun getD2Configuration(context: Context): D2Configuration? {
             val interceptors: MutableList<Interceptor> =
                 ArrayList()
@@ -58,7 +58,8 @@ class ServerTestingModule() : ServerModule(){
                     AnalyticsHelper(
                         FirebaseAnalytics.getInstance(context),
                         PreferenceProviderImpl(context),
-                        MatomoAnalyticsControllerImpl(matomoTracker)
+                        MatomoAnalyticsControllerImpl(matomoTracker),
+                        TestingD2Manager.getD2()
                     )
                 )
             )

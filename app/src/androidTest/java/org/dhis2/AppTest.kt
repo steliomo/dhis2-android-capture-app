@@ -1,6 +1,6 @@
 package org.dhis2
 
-import org.dhis2.common.di.ServerTestingModule
+import org.dhis2.common.di.PinTestingModule
 import org.dhis2.common.di.TestingInjector
 import org.dhis2.common.preferences.PreferencesTestingModule
 import org.dhis2.data.schedulers.SchedulerModule
@@ -9,7 +9,8 @@ import org.dhis2.data.server.ServerModule
 import org.dhis2.data.service.workManager.WorkManagerModule
 import org.dhis2.data.user.UserModule
 import org.dhis2.utils.analytics.AnalyticsModule
-import org.hisp.dhis.android.core.D2Manager
+import org.dhis2.utils.session.PinModule
+import org.dhis2.utils.session.SessionComponent
 import org.hisp.dhis.android.core.D2TestingConfig
 import org.hisp.dhis.android.core.TestingD2Manager
 import org.hisp.dhis.android.core.arch.storage.internal.AndroidInsecureStore
@@ -33,10 +34,10 @@ class AppTest : App() {
     override fun setUpServerComponent() {
     //    D2Manager.setTestingDatabase(DB_TO_IMPORT, USERNAME)
     //    D2Manager.blockingInstantiateD2(ServerModule.getD2Configuration(this))
-        TestingD2Manager.blockingInstantiateD2(ServerTestingModule.getD2Configuration(this)!!, D2TestingConfig(
+        TestingD2Manager.blockingInstantiateD2(ServerModule.getD2Configuration(this)!!, D2TestingConfig(
             DB_TO_IMPORT, USERNAME, AndroidSecureStore(this), AndroidInsecureStore(this)))
 
-        serverComponent = appComponent.plus(ServerTestingModule())
+        serverComponent = appComponent.plus(ServerModule())
 
         setUpUserComponent()
     }
@@ -54,6 +55,11 @@ class AppTest : App() {
             userComponent = serverComponent!!.plus(UserModule())
         }
     }
+
+    /* override fun createSessionComponent(pinModule: PinModule?): SessionComponent {
+        val pinDialog = pinModule!!.view
+        return appComponent.plus(PinTestingModule(pinDialog))
+    } */
 
     override fun prepareAppComponent(): AppComponent.Builder {
         return DaggerAppComponent.builder()
